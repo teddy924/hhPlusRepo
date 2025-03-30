@@ -1,5 +1,5 @@
 name: "🚀 Deploy"
-description: "배포"
+description: "배포 관련 이슈"
 labels: ["deploy"]
 body:
   - type: textarea
