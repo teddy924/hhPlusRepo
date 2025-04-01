@@ -1,1 +1,4 @@
-<pre><code># 잔액 조회 API 시퀀스 다이어그램 ```mermaid sequenceDiagram actor Client participant API_Gateway as API Gateway participant Account_Service as Account Service participant DB Client->>API_Gateway: 계좌 조회 요청 API_Gateway->>Account_Service: 계좌 조회 Account_Service->>DB: 계좌 정보 조회 DB-->>Account_Service: 계좌 정보 반환 Account_Service-->>API_Gateway: 계좌 정보 반환 API_Gateway-->>Client: 계좌 정보 응답 ``` </code></pre>
+## 캠핑 e-커머스 시퀀스 다이어그램
+### 잔액 조회 API
+
+![잔액 조회 API](./retvAccount-API.svg)

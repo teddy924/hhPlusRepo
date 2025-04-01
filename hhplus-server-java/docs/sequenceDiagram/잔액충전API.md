@@ -1,1 +1,4 @@
-<pre><code># 잔액 충전 API 시퀀스 다이어그램 ```mermaid sequenceDiagram actor Client participant API_Gateway as API Gateway participant Account_Service as Account Service participant DB Client->>API_Gateway: 계좌 충전 요청 API_Gateway->>Account_Service: 계좌 충전 처리 Account_Service->>DB: 계좌 금액 증가 DB-->>Account_Service: 계좌 정보 업데이트 완료 Account_Service->>DB: 충전 이력 저장 DB-->>Account_Service: 저장 완료 Account_Service-->>API_Gateway: 충전 성공 응답 API_Gateway-->>Client: 충전 완료 응답 ``` </code></pre>
+## 캠핑 e-커머스 시퀀스 다이어그램
+### 잔액 충전 API
+
+![잔액 충전 API](./chargeAccount-API.svg)
