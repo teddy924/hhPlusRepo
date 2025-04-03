@@ -1,0 +1,18 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: camping-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: hhplus                    # ✅ application.yml의 DB 이름과 일치
+      MYSQL_USER: application                  # ✅ application.yml의 사용자와 일치
+      MYSQL_PASSWORD: application              # ✅ 비번 일치
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  db-data:
