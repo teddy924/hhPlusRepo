@@ -47,6 +47,9 @@ dependencies {
 
 	// swagger
 	implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+
+	compileOnly("org.projectlombok:lombok:1.18.28")
+	annotationProcessor("org.projectlombok:lombok:1.18.28")
 }
 
 tasks.withType<Test> {
