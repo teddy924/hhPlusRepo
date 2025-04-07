@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.account;
 
+import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 
 import java.time.LocalDateTime;
@@ -7,7 +8,7 @@ import java.time.LocalDateTime;
 public record AccountHistQueryDto(
         Long accountId
         , Long balance
-        , String status
+        , AccountHistType status
         , LocalDateTime sysCretDt
 ) {
 
@@ -15,7 +16,7 @@ public record AccountHistQueryDto(
         return new AccountHistQueryDto(
                 history.getAccountId()
                 , history.getBalance()
-                , history.getStatus().name()
+                , history.getStatus()
                 , history.getSysCretDt()
         );
     }
