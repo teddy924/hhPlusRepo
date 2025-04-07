@@ -33,6 +33,7 @@ public class CouponController {
     public ResponseEntity<ResponseApi<List<CouponResponseDTO>>> retvCouponList(
         @RequestBody CouponRequestDTO couponRequestDTO
     ) {
+
 //        return ResponseEntity.ok(new ResponseApi<>(List.of()));
         return ResponseEntity.ok(new ResponseApi<>(List.of(new CouponResponseDTO(123L
                                                                                 , "mock 쿠폰"

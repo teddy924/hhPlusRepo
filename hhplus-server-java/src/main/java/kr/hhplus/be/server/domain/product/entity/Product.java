@@ -1,9 +1,6 @@
 package kr.hhplus.be.server.domain.product.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,14 +21,25 @@ import java.time.LocalDateTime;
 public class Product {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Long sellerId;
+
     private String name;
+
     private Long price;
+
     private Integer stock;
+
     private ProductCategoryType category;
+
     private LocalDateTime efctStDt;
+
     private LocalDateTime efctFnsDt;
+
     private LocalDateTime sysCretDt;
+
     private LocalDateTime sysChgDt;
+
 }

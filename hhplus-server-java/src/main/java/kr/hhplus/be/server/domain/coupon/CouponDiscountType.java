@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.domain.coupon;
 
-public enum CouponType {
+public enum CouponDiscountType {
     RATE
     ,
 }

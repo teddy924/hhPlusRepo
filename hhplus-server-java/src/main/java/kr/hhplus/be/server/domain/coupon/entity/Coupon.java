@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.coupon.entity;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.coupon.CouponDiscountType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,13 +19,13 @@ public class Coupon {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     private String name;
 
-    private long discountType;
+    private CouponDiscountType discountType;
 
-    private long discountValue;
+    private Long discountValue;
 
     private LocalDateTime sysCretDt;
 
