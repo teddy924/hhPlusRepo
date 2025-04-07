@@ -19,7 +19,7 @@ public enum ErrorCode {
     INVALID_USER(BAD_REQUEST.value(),"C-2001","유효하지 않은 사용자입니다."),
     NOT_EXIST_USER(BAD_REQUEST.value(),"C-2002","사용자가 존재하지 않습니다."),
 
-    // balance
+    // account
     INVALID_CHARGE_BALANCE(BAD_REQUEST.value(),"C-3001","유효하지 않은 충전 금액입니다."),
 
     // product

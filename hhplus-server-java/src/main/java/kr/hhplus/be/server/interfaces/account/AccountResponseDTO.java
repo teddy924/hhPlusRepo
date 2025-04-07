@@ -1,16 +1,17 @@
 package kr.hhplus.be.server.interfaces.account;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import kr.hhplus.be.server.application.account.AccountQueryDto;
+import lombok.*;
 
-@Data
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class AccountResponseDTO {
     private Long id;
-    private Long balance;
+    private Long amount;
 
+    public static AccountResponseDTO from(AccountQueryDto queryDto) {
+        return new AccountResponseDTO(queryDto.userId(), queryDto.amount());
+    }
 }
