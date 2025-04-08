@@ -8,9 +8,10 @@ import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+
 @Service
 @RequiredArgsConstructor
-public class AccountCommandService {
+public class AccountCommand {
 
     private final AccountService accountService;
     private final AccountHistRepository accountHistRepository;
