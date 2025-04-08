@@ -2,9 +2,9 @@ package kr.hhplus.be.server.interfaces.coupon;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.application.coupon.CouponCommandService;
+import kr.hhplus.be.server.application.coupon.CouponCommand;
 import kr.hhplus.be.server.application.coupon.CouponQueryDto;
-import kr.hhplus.be.server.application.coupon.CouponQueryService;
+import kr.hhplus.be.server.application.coupon.CouponQuery;
 import kr.hhplus.be.server.common.ResponseApi;
 import kr.hhplus.be.server.config.swagger.SwaggerError;
 import kr.hhplus.be.server.config.swagger.SwaggerSuccess;
@@ -22,8 +22,8 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 @RequiredArgsConstructor
 public class CouponController {
 
-    private final CouponQueryService couponQueryService;
-    private final CouponCommandService couponCommandService;
+    private final CouponQuery couponQueryService;
+    private final CouponCommand couponCommandService;
 
     @GetMapping
     @SwaggerSuccess(responseType = CouponResponseDTO.class)

@@ -4,7 +4,6 @@ import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.CouponRepository;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
-import kr.hhplus.be.server.interfaces.coupon.CouponIssueRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class CouponQueryService {
+public class CouponQuery {
 
     private final CouponRepository couponRepository;
     private final CouponIssueRepository couponIssueRepository;
