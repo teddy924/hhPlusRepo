@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ProductQueryService {
+public class ProductQuery {
 
     private final ProductSalesService productSalesService;
     private final ProductRepository productRepository;
@@ -44,12 +44,9 @@ public class ProductQueryService {
     // 상위 top5 상품 조회
     public List<ProductQueryDto> retrieveTopRank (String category) {
 
-        List<Product> productList = new ArrayList<>();
-        List<ProductSalesDto> productSalesList = new ArrayList<>();
+        List<ProductSalesDto> productSalesList = productSalesService.getTopRankProducts(category);
 
-        productSalesList = productSalesService.getTopRankProducts(category);
-
-        productList = productRepository.findByProductIds(productSalesList);
+        List<Product> productList = productRepository.findByProductIds(productSalesList);
 
         return productList.stream().map(ProductQueryDto::from).toList();
 

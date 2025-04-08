@@ -3,7 +3,7 @@ package kr.hhplus.be.server.interfaces.product;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.application.product.ProductQueryDto;
-import kr.hhplus.be.server.application.product.ProductQueryService;
+import kr.hhplus.be.server.application.product.ProductQuery;
 import kr.hhplus.be.server.common.ResponseApi;
 import kr.hhplus.be.server.config.swagger.SwaggerError;
 import kr.hhplus.be.server.config.swagger.SwaggerSuccess;
@@ -21,7 +21,7 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductQueryService productQueryService;
+    private final ProductQuery productQueryService;
 
     @GetMapping
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
