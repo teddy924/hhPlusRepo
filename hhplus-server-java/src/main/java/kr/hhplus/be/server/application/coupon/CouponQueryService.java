@@ -4,10 +4,10 @@ import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.CouponRepository;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
+import kr.hhplus.be.server.interfaces.coupon.CouponIssueRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -20,7 +20,7 @@ public class CouponQueryService {
     private final CouponRepository couponRepository;
     private final CouponIssueRepository couponIssueRepository;
 
-    public CouponIssueQueryDto retrieveCouponList (Long userId) {
+    public List<CouponQueryDto> retrieveCouponList (Long userId) {
 
         // 1. 발급 이력 조회
         List<CouponIssue> couponIssueList =  couponIssueRepository.findAllByUserId(userId);
@@ -36,15 +36,12 @@ public class CouponQueryService {
                 .collect(Collectors.toMap(Coupon::getId, Function.identity()));
 
         // 4. 쿠폰 이력 → CouponQueryDto 리스트로 변환
-        List<CouponQueryDto> couponQueryList = couponIssueList.stream()
+        return couponIssueList.stream()
                 .map(issue -> {
                     Coupon coupon = couponMap.get(issue.getCouponId());
-                    return CouponQueryDto.from(coupon);
+                    return CouponQueryDto.from(coupon, issue);
                 })
                 .toList();
-
-        // 5. 최종 DTO 생성
-        return CouponIssueQueryDto.of(userId, couponQueryList);
 
     }
 

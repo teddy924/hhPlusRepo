@@ -25,9 +25,10 @@ public class CouponIssue {
 
     private Long couponId;
 
-    private Enum<CouponStatus> status;
+    @Enumerated(EnumType.STRING)
+    private CouponStatus status;
 
     private LocalDateTime issuedDt;
 
-    private LocalDateTime uesdDt;
+    private LocalDateTime usedDt;
 }

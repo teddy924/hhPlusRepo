@@ -10,7 +10,17 @@ import java.util.List;
 public class CouponRepositoryImpl implements CouponRepository {
 
     @Override
+    public Coupon findById(Long couponId) {
+        return null;
+    }
+
+    @Override
     public List<Coupon> findByCouponIds(List<Long> couponIds) {
         return List.of();
+    }
+
+    @Override
+    public void save(Coupon coupon) {
+
     }
 }

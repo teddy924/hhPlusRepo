@@ -13,4 +13,9 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepository {
     public List<CouponIssue> findAllByUserId(Long userId) {
         return List.of();
     }
+
+    @Override
+    public void save(CouponIssue couponIssue) {
+
+    }
 }

@@ -8,4 +8,6 @@ public interface CouponIssueRepository {
 
     List<CouponIssue> findAllByUserId(Long userId);
 
+    void save(CouponIssue couponIssue);
+
 }
