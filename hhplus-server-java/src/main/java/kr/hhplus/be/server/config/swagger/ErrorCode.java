@@ -20,7 +20,8 @@ public enum ErrorCode {
     NOT_EXIST_USER(BAD_REQUEST.value(),"C-2002","사용자가 존재하지 않습니다."),
 
     // account
-    INVALID_CHARGE_BALANCE(BAD_REQUEST.value(),"C-3001","유효하지 않은 충전 금액입니다."),
+    INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3001","충전/사용 최소 금액은 100원입니다."),
+
 
     // product
     OUT_OF_STOCK(BAD_REQUEST.value(),"C-4001","상품이 품절 상태 입니다."),

@@ -2,9 +2,6 @@ package kr.hhplus.be.server.application.account;
 
 import jakarta.transaction.Transactional;
 import kr.hhplus.be.server.domain.account.AccountHistType;
-import kr.hhplus.be.server.domain.account.AccountRepository;
-import kr.hhplus.be.server.domain.account.entity.Account;
-import kr.hhplus.be.server.interfaces.account.AccountRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,25 +9,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AccountFacade {
 
-    private final AccountRepository accountRepository;
-    private final AccountCommand accountCmdService;
+    private final AccountService accountService;
 
     @Transactional
-    public void charge(AccountRequestDTO accountRequestDTO) throws Exception {
-        Account account = accountRepository.findByUserId(accountRequestDTO.getId())
-                .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
+    public void charge(AccountCommand command) throws Exception {
 
-        accountCmdService.chargeAmount(account, accountRequestDTO.getAmount());
-        accountCmdService.saveHist(account, accountRequestDTO.getAmount(), AccountHistType.CHARGE);
+        accountService.chargeAmount(command);
+        accountService.saveHist(command, AccountHistType.CHARGE);
     }
 
     @Transactional
-    public void use(AccountRequestDTO accountRequestDTO) throws Exception {
-        Account account = accountRepository.findByUserId(accountRequestDTO.getId())
-                .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
+    public void use(AccountCommand command) throws Exception {
 
-        accountCmdService.useAmount(account, accountRequestDTO.getAmount());
-        accountCmdService.saveHist(account, accountRequestDTO.getAmount(), AccountHistType.USE);
+        accountService.useAmount(command);
+        accountService.saveHist(command, AccountHistType.USE);
     }
 
 }
