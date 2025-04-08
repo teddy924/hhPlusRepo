@@ -20,9 +20,8 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 @RequiredArgsConstructor
 public class AccountController {
 
-    private final AccountQueryService accountQueryService;
+    private final AccountQuery accountQueryService;
     private final AccountFacade accountFacade;
-    private final AccountCommandService accountCommandService;
 
     @GetMapping("/{userId}/balance")
     @SwaggerSuccess(responseType = AccountResponseDTO.class)

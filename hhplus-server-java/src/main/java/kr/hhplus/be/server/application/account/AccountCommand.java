@@ -2,19 +2,16 @@ package kr.hhplus.be.server.application.account;
 
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
-import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.AccountService;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-
 
 @Service
 @RequiredArgsConstructor
-public class AccountCommandService {
+public class AccountCommand {
 
     private final AccountService accountService;
     private final AccountHistRepository accountHistRepository;

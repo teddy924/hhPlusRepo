@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class AccountFacade {
 
     private final AccountRepository accountRepository;
-    private final AccountCommandService accountCmdService;
+    private final AccountCommand accountCmdService;
 
     @Transactional
     public void charge(AccountRequestDTO accountRequestDTO) throws Exception {

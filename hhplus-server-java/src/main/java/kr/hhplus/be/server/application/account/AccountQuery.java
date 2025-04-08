@@ -11,7 +11,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class AccountQueryService {
+public class AccountQuery {
 
     private final AccountRepository accountRepository;
     private final AccountHistRepository accountHistoryRepository;
