@@ -25,6 +25,7 @@ public enum ErrorCode {
     // product
     OUT_OF_STOCK(BAD_REQUEST.value(),"C-4001","상품이 품절 상태 입니다."),
     NOT_EXIST_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
+    INVALID_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
 
     // coupon
     NOT_HAS_COUPON(BAD_REQUEST.value(),"C-5001","보유하고 있는 쿠폰이 없습니다."),

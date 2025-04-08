@@ -42,4 +42,15 @@ public class Product {
 
     private LocalDateTime sysChgDt;
 
+    public boolean isExpired() {
+        boolean isExpired = false;
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(efctStDt) && now.isBefore(efctFnsDt)) {
+            isExpired = true;
+        }
+
+        return isExpired;
+    }
+
 }
