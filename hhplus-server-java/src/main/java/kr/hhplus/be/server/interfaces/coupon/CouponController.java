@@ -2,9 +2,7 @@ package kr.hhplus.be.server.interfaces.coupon;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.application.coupon.CouponCommandService;
-import kr.hhplus.be.server.application.coupon.CouponQueryDto;
-import kr.hhplus.be.server.application.coupon.CouponQueryService;
+import kr.hhplus.be.server.application.coupon.CouponService;
 import kr.hhplus.be.server.common.ResponseApi;
 import kr.hhplus.be.server.config.swagger.SwaggerError;
 import kr.hhplus.be.server.config.swagger.SwaggerSuccess;
@@ -22,8 +20,7 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 @RequiredArgsConstructor
 public class CouponController {
 
-    private final CouponQueryService couponQueryService;
-    private final CouponCommandService couponCommandService;
+    private final CouponService couponService;
 
     @GetMapping
     @SwaggerSuccess(responseType = CouponResponseDTO.class)
@@ -36,9 +33,7 @@ public class CouponController {
             @RequestParam (value = "userId") Long userId
     ) {
 
-        List<CouponQueryDto> queryList = couponQueryService.retrieveCouponList(userId);
-
-        List<CouponResponseDTO> couponList = queryList.stream().map(CouponResponseDTO::from).toList();
+        List<CouponResponseDTO> couponList = couponService.retrieveCouponList(userId);
 
         return ResponseEntity.ok(new ResponseApi<>(true, "보유 쿠폰 목록 조회 성공", couponList));
 
@@ -47,8 +42,7 @@ public class CouponController {
     @PostMapping("/issueCoupon")
     @SwaggerSuccess(responseType = CouponResponseDTO.class)
     @SwaggerError({
-            NOT_EXIST_USER
-            , NOT_EXIST_COUPON
+            NOT_EXIST_COUPON
             , INVALID_COUPON
             , DUPLICATE_ISSUE_COUPON
     })
@@ -57,7 +51,7 @@ public class CouponController {
         @RequestBody CouponIssueRequestDTO couponIssueRequestDTO
     ) {
 
-        couponCommandService.issueCoupon(couponIssueRequestDTO);
+        couponService.issueCoupon(couponIssueRequestDTO);
 
         return ResponseEntity.ok(new ResponseApi<>("쿠폰 발급 성공"));
 

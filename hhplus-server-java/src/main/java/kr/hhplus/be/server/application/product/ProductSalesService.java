@@ -1,5 +1,7 @@
-package kr.hhplus.be.server.domain.product;
+package kr.hhplus.be.server.application.product;
 
+import kr.hhplus.be.server.domain.product.ProductRankingPolicy;
+import kr.hhplus.be.server.domain.product.ProductSalesRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +16,9 @@ public class ProductSalesService {
     private final ProductSalesRepository productSalesRepository;
     private final ProductRankingPolicy productRankingPolicy;
 
-    public List<ProductSalesDto> getTopRankProducts(String category) {
+    public List<ProductSalesResult> getTopRankProducts(String category) {
 
-        List<ProductSalesDto> productSalesList = new ArrayList<>();
+        List<ProductSalesResult> productSalesList = new ArrayList<>();
 
         LocalDateTime startTime = productRankingPolicy.getStartTime();  // 조회 기준 시작일자
         LocalDateTime endTime = productRankingPolicy.getEndTime();      // 조회 기준 종료일자

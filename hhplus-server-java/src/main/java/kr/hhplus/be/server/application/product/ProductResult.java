@@ -5,7 +5,7 @@ import kr.hhplus.be.server.domain.product.entity.Product;
 
 import java.time.LocalDateTime;
 
-public record ProductQueryDto (
+public record ProductResult(
         Long productId
         , Long sellerId
         , String productName
@@ -15,8 +15,8 @@ public record ProductQueryDto (
         , LocalDateTime efctStDt
         , LocalDateTime efctFnsDt
 ) {
-    public static ProductQueryDto from(Product product) {
-        return new ProductQueryDto(
+    public static ProductResult from(Product product) {
+        return new ProductResult(
                 product.getId()
                 , product.getSellerId()
                 , product.getName()

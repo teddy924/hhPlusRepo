@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.account.entity;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.common.exception.CustomException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,6 +11,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+
+import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Getter
 @Entity
@@ -26,7 +29,7 @@ public class Account {
 
     private Long userId;
 
-    private Long balnace;
+    private Long balance;
 
     @CreatedDate
     private LocalDateTime sysCretDt;
@@ -37,25 +40,25 @@ public class Account {
     // 충전
     public void charge(Long amount) throws Exception {
         validateAmount(amount);
-        this.balnace += amount;
+        this.balance += amount;
     }
 
     // 사용
     public void use(Long amount) throws Exception {
         validateAmount(amount);
-        this.balnace -= amount;
+        this.balance -= amount;
     }
 
     // 충전, 사용 최소 금액 제한
     public void validateAmount(Long amount) throws Exception {
         if (amount % 100 != 0) {
-            throw new Exception("금액은 100원 단위 이상으로만 가능합니다.");
+            throw new CustomException(INVALID_ACCOUNT_AMOUNT);
         }
     }
 
     // 잔액이 사용량보다 많을 때만 사용 가능
     public boolean canUse(Long amount) {
-        return this.balnace >= amount;
+        return this.balance >= amount;
     }
 
 }

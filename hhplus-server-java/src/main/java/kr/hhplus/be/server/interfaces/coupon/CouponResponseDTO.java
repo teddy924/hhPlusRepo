@@ -1,9 +1,10 @@
 package kr.hhplus.be.server.interfaces.coupon;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import kr.hhplus.be.server.application.coupon.CouponQueryDto;
 import kr.hhplus.be.server.domain.coupon.CouponDiscountType;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
+import kr.hhplus.be.server.domain.coupon.entity.Coupon;
+import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,15 +25,15 @@ public class CouponResponseDTO {
     private LocalDateTime issuedAt;
     private LocalDateTime expiredAt;
 
-    public static CouponResponseDTO from(CouponQueryDto couponQueryDto) {
+    public static CouponResponseDTO from(Coupon coupon, CouponIssue couponIssue) {
         return new CouponResponseDTO(
-                couponQueryDto.couponId(),
-                couponQueryDto.couponName(),
-                couponQueryDto.discountType(),
-                couponQueryDto.discountValue(),
-                couponQueryDto.status(),
-                couponQueryDto.issuedDt(),
-                couponQueryDto.usedDt()
+                coupon.getId(),
+                coupon.getName(),
+                coupon.getDiscountType(),
+                coupon.getDiscountValue(),
+                couponIssue.getStatus(),
+                couponIssue.getIssuedDt(),
+                couponIssue.getUsedDt()
         );
     }
 }

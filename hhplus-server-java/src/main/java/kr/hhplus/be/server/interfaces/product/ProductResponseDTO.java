@@ -1,13 +1,11 @@
 package kr.hhplus.be.server.interfaces.product;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import kr.hhplus.be.server.application.product.ProductQueryDto;
+import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -21,7 +19,7 @@ public class ProductResponseDTO {
     private Long price;
     private Integer stock;
 
-    public static ProductResponseDTO from(ProductQueryDto queryDto) {
+    public static ProductResponseDTO from(ProductResult queryDto) {
         return new ProductResponseDTO(
                 queryDto.productId()
                 , queryDto.productName()
@@ -32,9 +30,4 @@ public class ProductResponseDTO {
         );
     }
 
-    public static List<ProductResponseDTO> fromList(List<ProductQueryDto> queryDtoList) {
-        return queryDtoList.stream()
-                .map(ProductResponseDTO::from)
-                .toList();
-    }
 }
