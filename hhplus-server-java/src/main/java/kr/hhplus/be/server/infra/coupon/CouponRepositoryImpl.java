@@ -5,13 +5,14 @@ import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CouponRepositoryImpl implements CouponRepository {
 
     @Override
-    public Coupon findById(Long couponId) {
-        return null;
+    public Optional<Coupon> findById(Long couponId) {
+        return Optional.empty();
     }
 
     @Override
