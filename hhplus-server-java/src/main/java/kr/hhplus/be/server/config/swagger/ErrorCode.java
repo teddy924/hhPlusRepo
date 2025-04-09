@@ -22,7 +22,6 @@ public enum ErrorCode {
     // account
     INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3001","충전/사용 최소 금액은 100원입니다."),
 
-
     // product
     OUT_OF_STOCK(BAD_REQUEST.value(),"C-4001","상품이 품절 상태 입니다."),
     NOT_EXIST_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
