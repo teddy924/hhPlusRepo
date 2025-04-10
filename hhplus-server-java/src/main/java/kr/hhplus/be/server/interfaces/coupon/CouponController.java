@@ -2,17 +2,14 @@ package kr.hhplus.be.server.interfaces.coupon;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.application.coupon.CouponService;
 import kr.hhplus.be.server.common.ResponseApi;
 import kr.hhplus.be.server.config.swagger.SwaggerError;
 import kr.hhplus.be.server.config.swagger.SwaggerSuccess;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
@@ -23,39 +20,41 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 @RequiredArgsConstructor
 public class CouponController {
 
-    @PostMapping("/retvCouponList")
+    private final CouponService couponService;
+
+    @GetMapping
     @SwaggerSuccess(responseType = CouponResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_USER
             , NOT_HAS_COUPON
     })
     @Operation(summary = "쿠폰 목록 조회", description = "유저 ID가 보유하고 있는 쿠폰 목록을 조회한다.")
-    public ResponseEntity<ResponseApi<List<CouponResponseDTO>>> retvCouponList(
-        @RequestBody CouponRequestDTO couponRequestDTO
+    public ResponseEntity<ResponseApi<List<CouponResponseDTO>>> retrieve(
+            @RequestParam (value = "userId") Long userId
     ) {
-//        return ResponseEntity.ok(new ResponseApi<>(List.of()));
-        return ResponseEntity.ok(new ResponseApi<>(List.of(new CouponResponseDTO(123L
-                                                                                , "mock 쿠폰"
-                                                                                , "RATE"
-                                                                                , 15L
-                                                                                , LocalDateTime.now()
-                                                                                , LocalDateTime.now().plusDays(10L)))));
+
+        List<CouponResponseDTO> couponList = couponService.retrieveCouponList(userId);
+
+        return ResponseEntity.ok(new ResponseApi<>(true, "보유 쿠폰 목록 조회 성공", couponList));
+
     }
 
     @PostMapping("/issueCoupon")
-    @SwaggerSuccess(responseType = CouponIssueResponseDTO.class)
+    @SwaggerSuccess(responseType = CouponResponseDTO.class)
     @SwaggerError({
-            NOT_EXIST_USER
-            , NOT_EXIST_COUPON
+            NOT_EXIST_COUPON
             , INVALID_COUPON
             , DUPLICATE_ISSUE_COUPON
     })
     @Operation(summary = "쿠폰 발급", description = "유저 ID에게 쿠폰을 발급한다.")
-    public ResponseEntity<ResponseApi<CouponIssueResponseDTO>> issueCoupon(
+    public ResponseEntity<ResponseApi<String>> issueCoupon(
         @RequestBody CouponIssueRequestDTO couponIssueRequestDTO
     ) {
-//        return ResponseEntity.ok(new ResponseApi<>(new CouponIssueResponseDTO()));
-        return ResponseEntity.ok(new ResponseApi<>(new CouponIssueResponseDTO(true, 1234231L, LocalDateTime.now())));
+
+        couponService.issueCoupon(couponIssueRequestDTO);
+
+        return ResponseEntity.ok(new ResponseApi<>("쿠폰 발급 성공"));
+
     }
 
 }

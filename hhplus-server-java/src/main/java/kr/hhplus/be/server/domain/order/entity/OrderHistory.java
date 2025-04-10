@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.order.entity;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.order.OrderHistoryStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,7 +20,7 @@ public class OrderHistory {
 
     private Long orderId;
 
-    private String status;
+    private OrderHistoryStatus status;
 
     private String memo;
 

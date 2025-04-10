@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.order.entity;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.order.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,9 +25,7 @@ public class Order {
 
     private Long totalAmount;
 
-    private String orderStatus;
-
-    private LocalDateTime orderedDt;
+    private OrderStatus orderStatus;
 
     private LocalDateTime sysCretDt;
 
