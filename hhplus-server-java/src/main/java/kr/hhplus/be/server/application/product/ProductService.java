@@ -39,10 +39,16 @@ public class ProductService {
     // 상품 상세 조회
     public ProductResponseDTO retrieveDetail (Long productId) {
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
+        Product product = retrieveProduct(productId);
 
         return ProductResponseDTO.from(ProductResult.from(product));
+
+    }
+
+    public Product retrieveProduct (Long productId) {
+
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
 
     }
 

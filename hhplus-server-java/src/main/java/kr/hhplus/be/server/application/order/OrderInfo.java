@@ -5,11 +5,10 @@ import lombok.Builder;
 import java.util.Map;
 
 @Builder
-public record OrderCommand (
+public record OrderInfo (
         Long userId,
         Map<Long, Long> productGrp,
         Long couponId,
-        OrderAddressInfo orderAddressInfo
+        Long totPrice
 ) {
-
 }

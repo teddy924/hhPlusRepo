@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.product.entity;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +10,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+
+import static kr.hhplus.be.server.config.swagger.ErrorCode.INVALID_PRODUCT;
+import static kr.hhplus.be.server.config.swagger.ErrorCode.OUT_OF_STOCK;
 
 
 @Getter
@@ -51,6 +55,13 @@ public class Product {
         }
 
         return isExpired;
+    }
+
+    public static void validSalesAvailability(Product product) {
+
+        if (product.getStock() <= 0) throw new CustomException(OUT_OF_STOCK);
+        if (product.isExpired()) throw new CustomException(INVALID_PRODUCT);
+
     }
 
 }

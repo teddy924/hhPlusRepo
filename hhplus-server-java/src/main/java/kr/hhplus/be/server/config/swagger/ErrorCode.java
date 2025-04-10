@@ -33,6 +33,10 @@ public enum ErrorCode {
     COUPON_SOLD_OUT(BAD_REQUEST.value(),"C-5003","선착순 마감으로 쿠폰 재고가 존재하지않습니다."),
     INVALID_COUPON(BAD_REQUEST.value(),"C-5004","유효하지 않은 쿠폰입니다."),
     DUPLICATE_ISSUE_COUPON(BAD_REQUEST.value(),"C-5005","이미 쿠폰을 받은 발급자 입니다."),
+    ALREADY_USED_COUPON(BAD_REQUEST.value(),"C-5006","이미 사용된 쿠폰입니다."),
+
+    // order
+    NOT_EXIST_ORDER(BAD_REQUEST.value(),"C-6001","해당 주문 정보를 찾을 수 없습니다.")
 
     ;
 
