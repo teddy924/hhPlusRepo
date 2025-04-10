@@ -1,7 +1,8 @@
-package kr.hhplus.be.server.domain.order.entity;
+package kr.hhplus.be.server.domain.payment.entity;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.order.OrderStatus;
+import kr.hhplus.be.server.domain.payment.PaymentMethod;
+import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,21 +12,25 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "orders")
+@Table(name = "payments")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Order {
+public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
+    private Long orderId;
 
-    private Long totalAmount;
+    private Long amount;
 
-    private OrderStatus orderStatus;
+    private PaymentMethod paymentMethod;
+
+    private PaymentStatus paymentStatus;
+
+    private LocalDateTime paidDt;
 
     private LocalDateTime sysCretDt;
 
