@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +74,8 @@ public class OrderService {
 
     public List<OrderItem> buildOrderItemList(Order order, Map<Product, Long> orderProductMap) {
 
-        return orderProductMap.entrySet().stream()
+        List<OrderItem> orderItemList = new ArrayList<>(
+                orderProductMap.entrySet().stream()
                 .map(entry -> {
                     Product product = entry.getKey();
                     Long quantity = entry.getValue();
@@ -84,7 +87,11 @@ public class OrderService {
                             .totAmount(product.getPrice() * quantity)
                             .build();
                 })
-                .toList();
+                .toList());
+
+        orderItemList.sort(Comparator.comparing(OrderItem::getQuantity));
+
+        return orderItemList;
     }
 
     public OrderCoupon buildOrderCoupon(CouponInfo couponInfo, Order order, Long totProductPrice) {

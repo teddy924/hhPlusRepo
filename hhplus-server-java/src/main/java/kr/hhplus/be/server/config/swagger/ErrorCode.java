@@ -20,18 +20,18 @@ public enum ErrorCode {
     NOT_EXIST_USER(BAD_REQUEST.value(),"C-2002","사용자가 존재하지 않습니다."),
 
     // account
-    INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3001","충전/사용 최소 금액은 100원입니다."),
+    INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3001","충전/사용 금액은 100원 단위의 100원 이상이어야 합니다."),
 
     // product
     OUT_OF_STOCK(BAD_REQUEST.value(),"C-4001","상품이 품절 상태 입니다."),
     NOT_EXIST_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
-    INVALID_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
+    INVALID_PRODUCT(BAD_REQUEST.value(),"C-4002","유효하지 않은 상품입니다."),
     INVALID_QUANTITY(BAD_REQUEST.value(),"C-4002","유효하지 않은 상품 수량 입니다."),
 
     // coupon
     NOT_HAS_COUPON(BAD_REQUEST.value(),"C-5001","보유하고 있는 쿠폰이 없습니다."),
     NOT_EXIST_COUPON(BAD_REQUEST.value(),"C-5002","해당 쿠폰을 찾을 수 없습니다."),
-    COUPON_SOLD_OUT(BAD_REQUEST.value(),"C-5003","선착순 마감으로 쿠폰 재고가 존재하지않습니다."),
+    COUPON_SOLD_OUT(BAD_REQUEST.value(),"C-5003","해당 쿠폰 재고가 존재하지 않습니다."),
     INVALID_COUPON(BAD_REQUEST.value(),"C-5004","유효하지 않은 쿠폰입니다."),
     DUPLICATE_ISSUE_COUPON(BAD_REQUEST.value(),"C-5005","이미 쿠폰을 받은 발급자 입니다."),
     ALREADY_USED_COUPON(BAD_REQUEST.value(),"C-5006","이미 사용된 쿠폰입니다."),

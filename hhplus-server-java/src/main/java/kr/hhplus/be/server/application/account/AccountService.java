@@ -1,16 +1,17 @@
 package kr.hhplus.be.server.application.account;
 
+import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
-import kr.hhplus.be.server.interfaces.account.AccountHistResponseDto;
-import kr.hhplus.be.server.interfaces.account.AccountResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class AccountService {
     public void chargeAmount (AccountInfo info) throws Exception {
 
         Account account = accountRepository.findByUserId(info.userId())
-                .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
 
         account.charge(info.amount());
 
@@ -34,7 +35,7 @@ public class AccountService {
     public void useAmount (AccountInfo info) throws Exception {
 
         Account account = accountRepository.findByUserId(info.userId())
-                .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
 
         if (account.canUse(info.amount())) {
             account.use(info.amount());
@@ -45,27 +46,26 @@ public class AccountService {
     }
 
     // 잔액 조회
-    public AccountResponseDTO retrieveAccount(Long userId) throws Exception {
+    public AccountResult retrieveAccount(Long userId) throws Exception {
 
         Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
 
-        return AccountResponseDTO.from(new AccountResult(account.getUserId(), account.getBalance()));
+        return new AccountResult(account.getUserId(), account.getBalance());
 
     }
 
     // 잔액 변동 이력 조회
-    public AccountHistResponseDto retrieveAccountHist(Long userId) throws Exception {
+    public List<AccountHistResult> retrieveAccountHist(Long userId) throws Exception {
 
         Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
 
-        List<AccountHistory> histories = accountHistRepository.findAllByUserId(account.getUserId());
+        List<AccountHistory> histories = accountHistRepository.findAllByAccountId(account.getId());
 
-        return AccountHistResponseDto.from(histories.stream()
+        return histories.stream()
                 .map(AccountHistResult::from)
-                .toList()
-        );
+                .toList();
 
 
     }

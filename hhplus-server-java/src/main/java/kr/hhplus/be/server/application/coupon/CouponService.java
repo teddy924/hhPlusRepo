@@ -61,7 +61,7 @@ public class CouponService {
     public void issueCoupon (CouponIssueRequestDTO couponIssueRequestDTO) {
 
         // 1. 쿠폰 유효여부 확인
-        Optional<Coupon> couponOpt = couponRepository.findById(couponIssueRequestDTO.userId());
+        Optional<Coupon> couponOpt = couponRepository.findById(couponIssueRequestDTO.couponId());
 
         Coupon coupon = couponOpt.orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
 

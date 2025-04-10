@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @RestController
@@ -21,34 +23,34 @@ public class AccountController {
     private final AccountService accountService;
     private final AccountFacade accountFacade;
 
-    @GetMapping("/{userId}/balance")
+    @GetMapping("/balance")
     @SwaggerSuccess(responseType = AccountResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_USER
     })
     @Operation(summary = "잔액 조회", description = "유저 ID로 현재 잔액을 조회한다.")
     public ResponseEntity<ResponseApi<AccountResponseDTO>> retrieve (
-            @PathVariable Long userId
+            @RequestParam Long userId
     ) throws Exception {
 
-        AccountResponseDTO responseDto = accountService.retrieveAccount(userId);
+        AccountResult result = accountService.retrieveAccount(userId);
 
-        return ResponseEntity.ok(new ResponseApi<>(true, "잔액 조회 성공", responseDto));
+        return ResponseEntity.ok(new ResponseApi<>(true, "잔액 조회 성공", AccountResponseDTO.from(result)));
     }
 
-    @GetMapping("/{userId}/balance/history")
+    @GetMapping("/balance/history")
     @SwaggerSuccess(responseType = AccountResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_USER
     })
     @Operation(summary = "잔액 변동 이력 조회", description = "유저 ID로 잔액 변동 이력을 조회한다.")
     public ResponseEntity<ResponseApi<AccountHistResponseDto>> retrieveHistory (
-            @PathVariable Long userId
+            @RequestParam Long userId
     ) throws Exception {
 
-        AccountHistResponseDto responseDto = accountService.retrieveAccountHist(userId);
+        List<AccountHistResult> resultList = accountService.retrieveAccountHist(userId);
 
-        return ResponseEntity.ok(new ResponseApi<>(true, "잔액 변동 이력 조회 성공", responseDto));
+        return ResponseEntity.ok(new ResponseApi<>(true, "잔액 변동 이력 조회 성공", AccountHistResponseDto.from(userId, resultList)));
     }
 
     @PostMapping("/charge")

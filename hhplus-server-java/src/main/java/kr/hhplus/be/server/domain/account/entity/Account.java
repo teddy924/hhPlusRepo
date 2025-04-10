@@ -51,7 +51,7 @@ public class Account {
 
     // 충전, 사용 최소 금액 제한
     public void validateAmount(Long amount) throws Exception {
-        if (amount % 100 != 0) {
+        if (amount == null || amount < 100 || amount % 100 != 0) {
             throw new CustomException(INVALID_ACCOUNT_AMOUNT);
         }
     }

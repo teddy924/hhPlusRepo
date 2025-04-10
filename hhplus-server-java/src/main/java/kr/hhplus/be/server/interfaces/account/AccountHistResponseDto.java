@@ -14,8 +14,8 @@ public class AccountHistResponseDto {
     Long userId;
     List<AccountHistResult> accountHistoryQueryList;
 
-    public static AccountHistResponseDto from (List<AccountHistResult> queryDtoList) {
-        return new AccountHistResponseDto(builder().userId, queryDtoList);
+    public static AccountHistResponseDto from (Long userId, List<AccountHistResult> queryDtoList) {
+        return new AccountHistResponseDto(userId, queryDtoList);
     }
 
 }

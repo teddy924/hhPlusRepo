@@ -56,10 +56,10 @@ public class Product {
         return isExpired;
     }
 
-    public static void validSalesAvailability(Product product) {
+    public void validSalesAvailability() {
 
-        if (product.getStock() <= 0) throw new CustomException(OUT_OF_STOCK);
-        if (product.isExpired()) throw new CustomException(INVALID_PRODUCT);
+        if (stock <= 0) throw new CustomException(OUT_OF_STOCK);
+        if (!isExpired()) throw new CustomException(INVALID_PRODUCT);
 
     }
 

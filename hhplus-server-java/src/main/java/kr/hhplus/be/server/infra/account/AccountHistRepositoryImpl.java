@@ -11,7 +11,7 @@ import java.util.List;
 public class AccountHistRepositoryImpl implements AccountHistRepository {
 
     @Override
-    public List<AccountHistory> findAllByUserId(Long userId) {
+    public List<AccountHistory> findAllByAccountId(Long AccountId) {
         return List.of();
     }
 
