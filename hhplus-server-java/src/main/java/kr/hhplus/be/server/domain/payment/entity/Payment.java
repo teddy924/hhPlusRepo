@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.domain.payment.entity;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.payment.PaymentMethod;
+import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,11 +24,11 @@ public class Payment {
 
     private Long orderId;
 
-    private int amount;
+    private Long amount;
 
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
 
-    private String paymentStatus;
+    private PaymentStatus paymentStatus;
 
     private LocalDateTime paidDt;
 

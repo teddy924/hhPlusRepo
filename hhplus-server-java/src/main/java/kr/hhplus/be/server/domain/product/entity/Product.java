@@ -11,8 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-import static kr.hhplus.be.server.config.swagger.ErrorCode.INVALID_PRODUCT;
-import static kr.hhplus.be.server.config.swagger.ErrorCode.OUT_OF_STOCK;
+import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 
 @Getter
@@ -62,6 +61,23 @@ public class Product {
         if (product.getStock() <= 0) throw new CustomException(OUT_OF_STOCK);
         if (product.isExpired()) throw new CustomException(INVALID_PRODUCT);
 
+    }
+
+    public void increaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new CustomException(INVALID_QUANTITY); // 방어 로직
+        }
+        this.stock += quantity;
+    }
+
+    public void decreaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new CustomException(INVALID_QUANTITY);
+        }
+        if (this.stock < quantity) {
+            throw new CustomException(OUT_OF_STOCK); // 재고 부족
+        }
+        this.stock -= quantity;
     }
 
 }

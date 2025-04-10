@@ -21,47 +21,12 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Optional<OrderAddress> findAddressById(Long id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public List<OrderItem> findItemByOrderId(Long id) {
-        return List.of();
-    }
-
-    @Override
-    public Optional<OrderCoupon> findCouponById(Long id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<OrderHistory> findHistoryById(Long id) {
-        return Optional.empty();
-    }
-
-    @Override
     public void saveOrder(Order order) {
 
     }
 
     @Override
-    public void saveOrderAddress(OrderAddress orderAddress) {
-
-    }
-
-    @Override
-    public void saveOrderItems(List<OrderItem> orderItems) {
-
-    }
-
-    @Override
-    public void saveOrderCoupon(OrderCoupon orderCoupon) {
-
-    }
-
-    @Override
-    public void saveOrderHistory(OrderHistory orderHistory) {
-
+    public List<Order> findAllByUserId(Long userId) {
+        return List.of();
     }
 }

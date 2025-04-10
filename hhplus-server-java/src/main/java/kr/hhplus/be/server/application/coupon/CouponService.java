@@ -139,5 +139,14 @@ public class CouponService {
 
     }
 
+    // 쿠폰 복구
+    public void restoreCouponUsage(Long userId, Long couponIssueId) {
+        CouponIssue issue = couponIssueRepository.findByIdAndUserId(couponIssueId, userId)
+                .orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
+
+        issue.restore(); // domain method → status = ISSUED, usedDt = null
+        couponIssueRepository.save(issue);
+    }
+
 
 }

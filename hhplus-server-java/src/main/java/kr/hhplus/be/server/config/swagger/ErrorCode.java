@@ -26,6 +26,7 @@ public enum ErrorCode {
     OUT_OF_STOCK(BAD_REQUEST.value(),"C-4001","상품이 품절 상태 입니다."),
     NOT_EXIST_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
     INVALID_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
+    INVALID_QUANTITY(BAD_REQUEST.value(),"C-4002","유효하지 않은 상품 수량 입니다."),
 
     // coupon
     NOT_HAS_COUPON(BAD_REQUEST.value(),"C-5001","보유하고 있는 쿠폰이 없습니다."),
@@ -34,9 +35,13 @@ public enum ErrorCode {
     INVALID_COUPON(BAD_REQUEST.value(),"C-5004","유효하지 않은 쿠폰입니다."),
     DUPLICATE_ISSUE_COUPON(BAD_REQUEST.value(),"C-5005","이미 쿠폰을 받은 발급자 입니다."),
     ALREADY_USED_COUPON(BAD_REQUEST.value(),"C-5006","이미 사용된 쿠폰입니다."),
+    INVALID_COUPON_RESTORE(BAD_REQUEST.value(),"C-5007","복구 대상 쿠폰이 아닙니다."),
 
     // order
-    NOT_EXIST_ORDER(BAD_REQUEST.value(),"C-6001","해당 주문 정보를 찾을 수 없습니다.")
+    NOT_EXIST_ORDER(BAD_REQUEST.value(),"C-6001","해당 주문 정보를 찾을 수 없습니다."),
+
+    // payment
+    NOT_EXIST_PAYMENT(BAD_REQUEST.value(),"C-7001","해당 결제 정보를 찾을 수 없습니다.")
 
     ;
 

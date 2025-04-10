@@ -1,19 +1,21 @@
 package kr.hhplus.be.server.interfaces.order;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import kr.hhplus.be.server.domain.order.entity.OrderItem;
+import lombok.Builder;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
 @Schema(description = "주문 상품 정보 DTO")
-public class OrderItemDTO {
-
-    private Long productId;
-    private String productName;
-    private int quantity;
-    private Long unitPrice;
-
+public record OrderItemDTO(
+        Long productId,
+        Integer quantity,
+        Long totAmount
+) {
+    public static OrderItemDTO from(OrderItem item) {
+        return new OrderItemDTO(
+                item.getProductId(),
+                item.getQuantity(),
+                item.getTotAmount()
+        );
+    }
 }

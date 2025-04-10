@@ -14,15 +14,19 @@ public class AccountFacade {
     @Transactional
     public void charge(AccountCommand command) throws Exception {
 
-        accountService.chargeAmount(command);
-        accountService.saveHist(command, AccountHistType.CHARGE);
+        AccountInfo info = command.toInfo();
+
+        accountService.chargeAmount(info);
+        accountService.saveHist(info, AccountHistType.CHARGE);
     }
 
     @Transactional
     public void use(AccountCommand command) throws Exception {
 
-        accountService.useAmount(command);
-        accountService.saveHist(command, AccountHistType.USE);
+        AccountInfo info = command.toInfo();
+
+        accountService.useAmount(info);
+        accountService.saveHist(info, AccountHistType.USE);
     }
 
 }

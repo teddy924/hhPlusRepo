@@ -24,4 +24,9 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepository {
     public Optional<CouponIssue> findByUserIdAndCouponId(Long userId, Long couponId) {
         return Optional.empty();
     }
+
+    @Override
+    public Optional<CouponIssue> findByIdAndUserId(Long couponIssueId, Long userId) {
+        return Optional.empty();
+    }
 }

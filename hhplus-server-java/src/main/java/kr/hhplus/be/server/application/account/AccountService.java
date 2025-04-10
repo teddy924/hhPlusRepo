@@ -20,24 +20,24 @@ public class AccountService {
     private final AccountHistRepository accountHistRepository;
 
     // 잔액 충전
-    public void chargeAmount (AccountCommand command) throws Exception {
+    public void chargeAmount (AccountInfo info) throws Exception {
 
-        Account account = accountRepository.findByUserId(command.userId())
+        Account account = accountRepository.findByUserId(info.userId())
                 .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
 
-        account.charge(command.amount());
+        account.charge(info.amount());
 
         accountRepository.save(account);
     }
 
     // 잔액 사용
-    public void useAmount (AccountCommand command) throws Exception {
+    public void useAmount (AccountInfo info) throws Exception {
 
-        Account account = accountRepository.findByUserId(command.userId())
+        Account account = accountRepository.findByUserId(info.userId())
                 .orElseThrow(() -> new Exception("사용자를 찾을 수 없습니다."));
 
-        if (account.canUse(command.amount())) {
-            account.use(command.amount());
+        if (account.canUse(info.amount())) {
+            account.use(info.amount());
         }
 
         accountRepository.save(account);
@@ -71,12 +71,12 @@ public class AccountService {
     }
 
     // 잔액 변동 이력 저장
-    public void saveHist(AccountCommand command, AccountHistType histType) {
+    public void saveHist(AccountInfo info, AccountHistType histType) {
 
         AccountHistory history = AccountHistory.builder()
-                .accountId(command.userId())
+                .accountId(info.userId())
                 .status(histType)
-                .balance(command.amount())
+                .balance(info.amount())
                 .build();
 
         accountHistRepository.save(history);

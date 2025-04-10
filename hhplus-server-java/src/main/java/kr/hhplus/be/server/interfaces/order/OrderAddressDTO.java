@@ -20,4 +20,17 @@ public record OrderAddressDTO(
     public OrderAddressInfo toInfo() {
         return new OrderAddressInfo(orderId, receiverName, phone, address1, address2, zipcode, memo, sysCretDt, sysChgDt);
     }
+
+    public static OrderAddressDTO from(OrderAddressInfo info) {
+        return new OrderAddressDTO(
+                info.orderId(),
+                info.receiverName(),
+                info.phone(),
+                info.address1(),
+                info.address2(),
+                info.zipcode(),
+                info.memo(),
+                info.sysCretDt(),
+                info.sysChgDt());
+    }
 }

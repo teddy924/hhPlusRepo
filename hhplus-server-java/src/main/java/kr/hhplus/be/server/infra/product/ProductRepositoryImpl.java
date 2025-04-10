@@ -30,4 +30,9 @@ public class ProductRepositoryImpl implements ProductRepository {
     public List<Product> findByProductIds(List<ProductSalesResult> productSalesList) {
         return List.of();
     }
+
+    @Override
+    public void save(Product product) {
+
+    }
 }

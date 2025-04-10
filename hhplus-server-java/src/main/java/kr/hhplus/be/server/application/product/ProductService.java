@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
@@ -63,6 +65,34 @@ public class ProductService {
 
         return resultList.stream().map(ProductResponseDTO::from).toList();
 
+    }
+
+    public void decreaseStock(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
+
+        product.decreaseStock(quantity); // 도메인 로직 위임
+        productRepository.save(product);
+    }
+
+    public void restoreStock(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
+
+        product.increaseStock(quantity); // domain method
+        productRepository.save(product);
+    }
+
+    public Map<Product, Long> processOrderProducts(Map<Long, Long> productGrp) {
+        Map<Product, Long> result = productGrp.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> retrieveProduct(entry.getKey()),
+                        Map.Entry::getValue
+                ));
+
+        result.keySet().forEach(Product::validSalesAvailability);
+
+        return result;
     }
 
 }

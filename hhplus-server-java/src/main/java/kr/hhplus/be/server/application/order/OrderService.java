@@ -2,11 +2,10 @@ package kr.hhplus.be.server.application.order;
 
 import kr.hhplus.be.server.application.coupon.CouponInfo;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.domain.order.OrderHistoryStatus;
-import kr.hhplus.be.server.domain.order.OrderRepository;
-import kr.hhplus.be.server.domain.order.OrderStatus;
+import kr.hhplus.be.server.domain.order.*;
 import kr.hhplus.be.server.domain.order.entity.*;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import kr.hhplus.be.server.interfaces.order.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +20,10 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderAddressRepository orderAddressRepository;
+    private final OrderCouponRepository orderCouponRepository;
+    private final OrderHistoryRepository orderHistoryRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public Long calculateTotalAmount(Map<Product, Long> orderProductMap) {
         return orderProductMap.entrySet().stream()
@@ -40,7 +43,7 @@ public class OrderService {
         return orderRepository.findById(orderId).orElseThrow(() -> new CustomException(NOT_EXIST_ORDER));
     }
 
-    public Order saveOrder(Order order, OrderStatus orderStatus) {
+    public Order buildOrder(Order order, OrderStatus orderStatus) {
 
         return Order.builder()
                 .id(order.getId())
@@ -52,7 +55,7 @@ public class OrderService {
                 .build();
     }
 
-    public OrderAddress setOrderAddress(Order order, OrderAddressInfo orderAddressInfo) {
+    public OrderAddress buildOrderAddress(Order order, OrderAddressInfo orderAddressInfo) {
 
         return OrderAddress.builder()
                 .orderId(order.getId())
@@ -67,7 +70,7 @@ public class OrderService {
 
     }
 
-    public List<OrderItem> setOrderItemList(Order order, Map<Product, Long> orderProductMap) {
+    public List<OrderItem> buildOrderItemList(Order order, Map<Product, Long> orderProductMap) {
 
         return orderProductMap.entrySet().stream()
                 .map(entry -> {
@@ -84,7 +87,7 @@ public class OrderService {
                 .toList();
     }
 
-    public OrderCoupon setOrderCoupon(CouponInfo couponInfo, Order order, Long totProductPrice) {
+    public OrderCoupon buildOrderCoupon(CouponInfo couponInfo, Order order, Long totProductPrice) {
 
         return OrderCoupon.builder()
                 .orderId(order.getId())
@@ -96,7 +99,7 @@ public class OrderService {
 
     }
 
-    public OrderHistory setOrderHistory(Order order, OrderHistoryStatus status)  {
+    public OrderHistory buildOrderHistory(Order order, OrderHistoryStatus status)  {
 
         return OrderHistory.builder()
                 .orderId(order.getId())
@@ -108,22 +111,31 @@ public class OrderService {
 
     public void saveOrderRelated(OrderSaveInfo orderSaveInfo) {
         orderRepository.saveOrder(orderSaveInfo.order());
-        orderRepository.saveOrderAddress(orderSaveInfo.orderAddress());
-        orderRepository.saveOrderItems(orderSaveInfo.orderItems());
-        orderRepository.saveOrderCoupon(orderSaveInfo.orderCoupon());
-        orderRepository.saveOrderHistory(orderSaveInfo.orderHistory());
+        orderAddressRepository.saveOrderAddress(orderSaveInfo.orderAddress());
+        orderItemRepository.saveOrderItems(orderSaveInfo.orderItems());
+        orderCouponRepository.saveOrderCoupon(orderSaveInfo.orderCoupon());
+        orderHistoryRepository.saveOrderHistory(orderSaveInfo.orderHistory());
     }
 
     public OrderSaveInfo retrieveOrderInfo(Long orderId) {
 
         return OrderSaveInfo.builder()
                 .order(orderRepository.findById(orderId).orElseThrow(RuntimeException::new))
-                .orderAddress(orderRepository.findAddressById(orderId).orElseThrow(RuntimeException::new))
-                .orderItems(orderRepository.findItemByOrderId(orderId))
-                .orderCoupon(orderRepository.findCouponById(orderId).orElseThrow(RuntimeException::new))
-                .orderHistory(orderRepository.findHistoryById(orderId).orElseThrow(RuntimeException::new))
+                .orderAddress(orderAddressRepository.findAddressById(orderId))
+                .orderItems(orderItemRepository.findItemByOrderId(orderId))
+                .orderCoupon(orderCouponRepository.findCouponById(orderId).orElseThrow(RuntimeException::new))
+                .orderHistory(orderHistoryRepository.findHistoryById(orderId).orElseThrow(RuntimeException::new))
                 .build();
 
     }
+
+    public List<OrderResponseDTO> retrieveOrdersByUserId(Long userId) {
+        List<Order> orders = orderRepository.findAllByUserId(userId);
+        return orders.stream()
+                .map(OrderResponseDTO::from)
+                .toList();
+    }
+
+
 
 }

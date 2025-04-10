@@ -11,21 +11,8 @@ public interface OrderRepository {
 
     Optional<Order> findById(Long id);
 
-    Optional<OrderAddress> findAddressById(Long id);
-
-    List<OrderItem> findItemByOrderId(Long id);
-
-    Optional<OrderCoupon> findCouponById(Long id);
-
-    Optional<OrderHistory> findHistoryById(Long id);
-
     void saveOrder(Order order);
 
-    void saveOrderAddress(OrderAddress orderAddress);
+    List<Order> findAllByUserId(Long userId);
 
-    void saveOrderItems(List<OrderItem> orderItems);
-
-    void saveOrderCoupon(OrderCoupon orderCoupon);
-
-    void saveOrderHistory(OrderHistory orderHistory);
 }
