@@ -2,15 +2,13 @@ package kr.hhplus.be.server.interfaces.product;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.ResponseApi;
 import kr.hhplus.be.server.config.swagger.SwaggerError;
 import kr.hhplus.be.server.config.swagger.SwaggerSuccess;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,61 +20,53 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 @RequiredArgsConstructor
 public class ProductController {
 
-    @PostMapping("/retvProductList")
+    private final ProductService productQueryService;
+
+    @GetMapping
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
     @SwaggerError({
-            NOT_EXIST_USER
 
     })
     @Operation(summary = "상품 목록 조회", description = "상품 목록을 조회한다. - 카테고리 별 조회 가능")
-    public ResponseEntity<ResponseApi<List<ProductResponseDTO>>> retvProductList(
-            @RequestBody ProductRequestDTO productRequestDTO
+    public ResponseEntity<ResponseApi<List<ProductResponseDTO>>> retrieve (
+            @RequestParam(value = "category", required = false) String category
     ) {
-//        return ResponseEntity.ok(new ResponseApi<>(List.of(new ProductResponseDTO())));
-        return ResponseEntity.ok(new ResponseApi<>(List.of(new ProductResponseDTO("P00001"
-                , "mock 텐트"
-                , 2L
-                , "TENT"
-                , 25000L
-                , 10))));
+
+        List<ProductResponseDTO> responseList = productQueryService.retrieveAll(category);
+
+        return ResponseEntity.ok(new ResponseApi<>(true, "상품 목록 조회 성공", responseList));
+
     }
 
-    @PostMapping("/retvProductDetail")
+    @GetMapping("/{productId}")
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
     @SwaggerError({
-            NOT_EXIST_USER
-
+            NOT_EXIST_PRODUCT
     })
     @Operation(summary = "상품 상세 조회", description = "상품 상세 정보를 조회한다.")
-    public ResponseEntity<ResponseApi<ProductResponseDTO>> retvProductDetail(
-            @RequestBody ProductRequestDTO productRequestDTO
+    public ResponseEntity<ResponseApi<ProductResponseDTO>> retrieve (
+            @PathVariable Long productId
     ) {
-//        return ResponseEntity.ok(new ResponseApi<>(new ProductResponseDTO()));
-        return ResponseEntity.ok(new ResponseApi<>(
-                new ProductResponseDTO("P00001"
-                , "mock 텐트"
-                , 2L
-                , "TENT"
-                , 25000L
-                , 10)));
+
+        ProductResponseDTO responseDto = productQueryService.retrieveDetail(productId);
+
+        return ResponseEntity.ok(new ResponseApi<>(true, "상품 상세 조회 성공", responseDto));
+
     }
 
-    @PostMapping("/retvRankProduct")
+    @GetMapping("/top")
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
     @SwaggerError({
-            NOT_EXIST_USER
 
     })
     @Operation(summary = "상위 상품 목록 조회", description = "상위 상품 목록을 조회한다. - 카테고리 별 조회 가능")
-    public ResponseEntity<ResponseApi<List<ProductResponseDTO>>> retvRankProduct(
-            @RequestBody ProductRequestDTO productRequestDTO
+    public ResponseEntity<ResponseApi<List<ProductResponseDTO>>> retrieveTop(
+            @RequestParam(value = "category", required = false) String category
     ) {
-        return ResponseEntity.ok(new ResponseApi<>(List.of(
-                new ProductResponseDTO("P00002", "mock A텐트", 2L, "TENT", 1000L, 3)
-                , new ProductResponseDTO("P00003", "mock 3인용 텐트", 2L, "TENT", 3000L, 4)
-                , new ProductResponseDTO("P00004", "mock 4인용 텐트", 3L, "TENT", 3000L, 5)
-                , new ProductResponseDTO("P00005", "mock 5인용 텐트", 4L, "TENT", 3000L, 6)
-                , new ProductResponseDTO("P00006", "mock 6인용 텐트", 5L, "TENT", 3000L, 7)
-        )));
+
+        List<ProductResponseDTO> responseList = productQueryService.retrieveTopRank(category);
+
+        return ResponseEntity.ok(new ResponseApi<>(true, "상위 상품 목록 조회 성공", responseList));
+
     }
 }
