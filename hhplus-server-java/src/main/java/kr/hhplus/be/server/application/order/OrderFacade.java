@@ -2,9 +2,10 @@ package kr.hhplus.be.server.application.order;
 
 import kr.hhplus.be.server.application.account.AccountInfo;
 import kr.hhplus.be.server.application.account.AccountService;
+import kr.hhplus.be.server.application.coupon.CouponApplyInfo;
 import kr.hhplus.be.server.application.coupon.CouponInfo;
 import kr.hhplus.be.server.application.coupon.CouponService;
-import kr.hhplus.be.server.application.coupon.CouponValidCommand;
+import kr.hhplus.be.server.application.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.application.payment.PaymentInfo;
 import kr.hhplus.be.server.application.payment.PaymentService;
 import kr.hhplus.be.server.application.product.ProductService;
@@ -52,18 +53,14 @@ public class OrderFacade {
 
         // 2. 쿠폰 적용
         CouponInfo couponInfo = null;
-        Long discountAmount = 0L;
-        Long finalPayableAmount = totalPrice;
+        CouponApplyInfo couponApplyInfo = CouponApplyInfo.builder().discountAmount(0L).finalPayableAmount(totalPrice).build();
 
         if (command.couponId() != null) {
-            // 쿠폰 유효성 검증
-            couponInfo = couponService.validCoupon(
-                    new CouponValidCommand(command.userId(), command.couponId())
-            );
+            // 쿠폰, 발급이력 조회
+            couponInfo = couponService.retrieveCouponInfo(new CouponIssueCommand(command.userId(), command.couponId()));
 
             // 할인 금액 계산
-            discountAmount = couponInfo.coupon().calculateCoupon(totalPrice);
-            finalPayableAmount = Math.max(0L, totalPrice - discountAmount);
+            couponApplyInfo = couponInfo.applyDiscount(totalPrice);
         }
 
         // 3. 주문 저장
@@ -72,17 +69,17 @@ public class OrderFacade {
                         .userId(command.userId())
                         .productGrp(command.productGrp())
                         .couponId(command.couponId())
-                        .totPrice(finalPayableAmount)
+                        .totPrice(couponApplyInfo.finalPayableAmount())
                         .build()
         );
 
         // 4. 결제 처리 (잔액 차감 + 이력 저장 + 결제 이력 저장)
-        processPayment(command.userId(), finalPayableAmount, order.getId());
+        processPayment(command.userId(), couponApplyInfo.finalPayableAmount(), order.getId());
 
         // 5. 주문 상세 정보 저장
         OrderCoupon orderCoupon = null;
         if (couponInfo != null && couponInfo.couponIssue().getCouponId() != null) {
-            orderCoupon = orderService.buildOrderCoupon(couponInfo, order, discountAmount);
+            orderCoupon = orderService.buildOrderCoupon(couponInfo, order, couponApplyInfo.discountAmount());
         }
 
         OrderSaveInfo orderSaveInfo = OrderSaveInfo.builder()
@@ -109,17 +106,12 @@ public class OrderFacade {
     // 주문 취소
     public void cancel(OrderCancelCommand command) throws Exception {
 
-        OrderSaveInfo orderSaveInfo = null;
-        Order order = null;
-        OrderHistory cancelHistory = null;
-
         // 1. 주문 이력 조회
-        orderSaveInfo = orderService.retrieveOrderInfo(command.orderId());
-
+        OrderSaveInfo orderSaveInfo = orderService.retrieveOrderInfo(command.orderId());
         // 2. 주문 상태 변경 - 취소
-        order = orderService.buildOrder(orderSaveInfo.order(), OrderStatus.CANCELED);
+        Order order = orderService.buildOrder(orderSaveInfo.order(), OrderStatus.CANCELED);
         // 3. 주문 취소 이력 추가
-        cancelHistory = orderService.buildOrderHistory(order, OrderHistoryStatus.CANCELED);
+        OrderHistory cancelHistory = orderService.buildOrderHistory(order, OrderHistoryStatus.CANCELED);
         // 4. 주문 변경사항 저장
         orderService.saveOrderRelated(
                 OrderSaveInfo.builder()

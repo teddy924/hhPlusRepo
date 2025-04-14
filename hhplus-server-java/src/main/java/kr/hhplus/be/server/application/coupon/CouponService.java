@@ -3,15 +3,12 @@ package kr.hhplus.be.server.application.coupon;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.CouponRepository;
-import kr.hhplus.be.server.domain.coupon.CouponStatus;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
-import kr.hhplus.be.server.interfaces.coupon.CouponIssueRequestDTO;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,10 +55,12 @@ public class CouponService {
     }
 
     // 쿠폰 발급
-    public void issueCoupon (CouponIssueRequestDTO couponIssueRequestDTO) {
+    public void issueCoupon (CouponIssueCommand couponIssueCommand) {
+
+        CouponIssueInfo issueInfo = couponIssueCommand.toInfo();
 
         // 1. 쿠폰 유효여부 확인
-        Optional<Coupon> couponOpt = couponRepository.findById(couponIssueRequestDTO.couponId());
+        Optional<Coupon> couponOpt = couponRepository.findById(issueInfo.couponId());
 
         Coupon coupon = couponOpt.orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
 
@@ -69,52 +68,32 @@ public class CouponService {
         coupon.expiredCoupon();
 
         // 2. 쿠폰 기 발급 여부 확인
-        List<CouponIssue> couponIssue = couponIssueRepository.findAllByUserId(couponIssueRequestDTO.userId());
-
-        if (!couponIssue.isEmpty()) {
-            couponIssue.forEach(issue -> {
-                boolean isDuplicate = issue.getCouponId().equals(couponIssueRequestDTO.couponId());
-                if (isDuplicate) {
-                    throw new CustomException(DUPLICATE_ISSUE_COUPON);
-                }
-            });
-        }
+        List<CouponIssue> couponIssueList = couponIssueRepository.findAllByUserId(issueInfo.userId());
+        issueInfo.couponIssueList().addAll(couponIssueList);
 
         // 3. 쿠폰 발급
         coupon.useOneQuantity();
         couponRepository.save(coupon);
 
-        CouponIssue issue = CouponIssue.builder()
-                .userId(couponIssueRequestDTO.userId())
-                .couponId(couponIssueRequestDTO.couponId())
-                .status(CouponStatus.ISSUED)
-                .issuedDt(LocalDateTime.now())
-                .usedDt(null)
-                .build();
-
         // 4. 쿠폰 발급 이력 저장
+        CouponIssue issue = new CouponIssue().issue(issueInfo);
         couponIssueRepository.save(issue);
 
     }
 
-    // 쿠폰 유효성 체크
-    public CouponInfo validCoupon (CouponValidCommand couponValidCommand) {
+    // 쿠폰 조회(쿠폰 정보, 이력)
+    public CouponInfo retrieveCouponInfo (CouponIssueCommand couponIssueCommand) {
 
         // 1. 쿠폰 발급 이력 확인
-        CouponIssue issue = couponIssueRepository.findByUserIdAndCouponId(couponValidCommand.userId(), couponValidCommand.couponId())
+        CouponIssue issue = couponIssueRepository.findByUserIdAndCouponId(couponIssueCommand.userId(), couponIssueCommand.couponId())
                 .orElseThrow(() -> new CustomException(NOT_HAS_COUPON));
 
         // 2. 쿠폰 엔티티 조회
-        Coupon coupon = couponRepository.findById(couponValidCommand.couponId())
+        Coupon coupon = couponRepository.findById(couponIssueCommand.couponId())
                 .orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
 
         // 3. 쿠폰 유효성 검사 (만료여부 확인)
         coupon.expiredCoupon();
-
-        // 4. 사용 이력 검사
-        if (issue.getStatus() == CouponStatus.USED) {
-            throw new CustomException(ALREADY_USED_COUPON);
-        }
 
         return CouponInfo.builder()
                 .coupon(coupon)
@@ -126,14 +105,7 @@ public class CouponService {
     // 쿠폰 사용
     public void useCoupon (CouponInfo couponInfo) {
 
-        CouponIssue issue = CouponIssue.builder()
-                .id(couponInfo.couponIssue().getId())
-                .userId(couponInfo.couponIssue().getUserId())
-                .couponId(couponInfo.couponIssue().getCouponId())
-                .status(CouponStatus.USED)
-                .issuedDt(couponInfo.couponIssue().getIssuedDt())
-                .usedDt(LocalDateTime.now())
-                .build();
+        CouponIssue issue =  new CouponIssue().use(couponInfo);
 
         couponIssueRepository.save(issue);
 
@@ -147,6 +119,7 @@ public class CouponService {
         issue.restore(); // domain method → status = ISSUED, usedDt = null
         couponIssueRepository.save(issue);
     }
+
 
 
 }

@@ -6,7 +6,6 @@ import kr.hhplus.be.server.domain.coupon.CouponRepository;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
-import kr.hhplus.be.server.interfaces.coupon.CouponIssueRequestDTO;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,11 +71,11 @@ class CouponServiceTest {
     @Test
     @DisplayName("쿠폰 발급 시 쿠폰이 존재하지 않으면 예외 발생")
     void issueCoupon_shouldThrow_whenCouponNotFound() {
-        CouponIssueRequestDTO request = new CouponIssueRequestDTO(1L, 1L);
+        CouponIssueCommand couponIssueCommand = new CouponIssueCommand(1L, 1L);
         when(couponRepository.findById(1L)).thenReturn(Optional.empty());
 
         CustomException ex = assertThrows(CustomException.class, () ->
-                couponService.issueCoupon(request)
+                couponService.issueCoupon(couponIssueCommand)
         );
 
         assertTrue(ex.getMessage().contains("해당 쿠폰을 찾을 수 없습니다."));
@@ -86,7 +85,7 @@ class CouponServiceTest {
     @DisplayName("유효기간이 만료된 쿠폰을 발급할 경우 예외가 발생해야 한다")
     void issueCoupon_shouldThrow_whenCouponExpired() {
         // given
-        CouponIssueRequestDTO request = new CouponIssueRequestDTO(1L, 10L);
+        CouponIssueCommand couponIssueCommand = new CouponIssueCommand(1L, 10L);
 
         Coupon expiredCoupon = new Coupon(
                 10L,
@@ -105,43 +104,11 @@ class CouponServiceTest {
 
         // when
         CustomException ex = assertThrows(CustomException.class, () ->
-                couponService.issueCoupon(request)
+                couponService.issueCoupon(couponIssueCommand)
         );
 
         // then
         assertTrue(ex.getMessage().contains("유효하지 않은 쿠폰입니다."));
-    }
-
-    @Test
-    @DisplayName("쿠폰 유효성 체크 성공")
-    void validCoupon_success() {
-        CouponValidCommand command = new CouponValidCommand(1L, 10L);
-        CouponIssue issue = new CouponIssue(1L, 1L, 10L, CouponStatus.ISSUED, LocalDateTime.now(), null);
-        Coupon coupon = mock(Coupon.class);
-
-        when(couponIssueRepository.findByUserIdAndCouponId(1L, 10L)).thenReturn(Optional.of(issue));
-        when(couponRepository.findById(10L)).thenReturn(Optional.of(coupon));
-
-        CouponInfo result = couponService.validCoupon(command);
-
-        assertEquals(10L, result.couponIssue().getCouponId());
-    }
-
-    @Test
-    @DisplayName("사용된 쿠폰 유효성 체크 시 예외 발생")
-    void validCoupon_shouldThrow_whenUsed() {
-        CouponValidCommand command = new CouponValidCommand(1L, 10L);
-        CouponIssue issue = new CouponIssue(1L, 1L, 10L, CouponStatus.USED, LocalDateTime.now(), null);
-        Coupon coupon = mock(Coupon.class);
-
-        when(couponIssueRepository.findByUserIdAndCouponId(1L, 10L)).thenReturn(Optional.of(issue));
-        when(couponRepository.findById(10L)).thenReturn(Optional.of(coupon));
-
-        CustomException ex = assertThrows(CustomException.class, () ->
-                couponService.validCoupon(command)
-        );
-
-        assertTrue(ex.getMessage().contains("이미 사용된 쿠폰입니다."));
     }
 
     @Test
