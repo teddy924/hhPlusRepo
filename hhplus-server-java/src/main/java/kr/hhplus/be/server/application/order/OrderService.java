@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.application.order;
 
-import kr.hhplus.be.server.application.coupon.CouponInfo;
+import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.order.*;
 import kr.hhplus.be.server.domain.order.entity.*;

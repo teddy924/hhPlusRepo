@@ -1,12 +1,12 @@
 package kr.hhplus.be.server.application.order;
 
-import kr.hhplus.be.server.application.account.AccountInfo;
+import kr.hhplus.be.server.domain.account.AccountInfo;
 import kr.hhplus.be.server.application.account.AccountService;
-import kr.hhplus.be.server.application.coupon.CouponApplyInfo;
-import kr.hhplus.be.server.application.coupon.CouponInfo;
+import kr.hhplus.be.server.domain.coupon.CouponApplyInfo;
+import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.application.coupon.CouponService;
-import kr.hhplus.be.server.application.coupon.CouponIssueCommand;
-import kr.hhplus.be.server.application.payment.PaymentInfo;
+import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
+import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.application.payment.PaymentService;
 import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.exception.CustomException;

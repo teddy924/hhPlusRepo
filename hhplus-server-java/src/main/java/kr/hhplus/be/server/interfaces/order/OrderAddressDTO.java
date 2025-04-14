@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.interfaces.order;
 
-import kr.hhplus.be.server.application.order.OrderAddressInfo;
+import kr.hhplus.be.server.domain.order.OrderAddressInfo;
 import lombok.Builder;
 
 import java.time.LocalDateTime;

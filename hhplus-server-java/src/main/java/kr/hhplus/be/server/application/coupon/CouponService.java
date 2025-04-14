@@ -1,8 +1,7 @@
 package kr.hhplus.be.server.application.coupon;
 
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
-import kr.hhplus.be.server.domain.coupon.CouponRepository;
+import kr.hhplus.be.server.domain.coupon.*;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;

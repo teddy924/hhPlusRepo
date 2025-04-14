@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.application.account;
+package kr.hhplus.be.server.domain.account;
 
 import lombok.Builder;
 

@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.payment;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.domain.payment.PaymentRepository;
 import kr.hhplus.be.server.domain.payment.entity.Payment;
 import lombok.RequiredArgsConstructor;

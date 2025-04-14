@@ -1,7 +1,6 @@
 package kr.hhplus.be.server.interfaces.order;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import kr.hhplus.be.server.application.order.OrderAddressInfo;
 import kr.hhplus.be.server.application.order.OrderCommand;
 import lombok.Builder;
 

@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.application.order;
+package kr.hhplus.be.server.domain.order;
 
 import java.time.LocalDateTime;
 

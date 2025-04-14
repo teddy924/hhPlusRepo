@@ -3,6 +3,7 @@ package kr.hhplus.be.server.application.account;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
+import kr.hhplus.be.server.domain.account.AccountInfo;
 import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
@@ -15,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -38,7 +38,7 @@ class AccountServiceTest {
         // given
         AccountInfo info = new AccountInfo(1L, 1000L);
         Account mockAccount = mock(Account.class);
-        when(accountRepository.findByUserId(1L)).thenReturn(Optional.of(mockAccount));
+        when(accountRepository.getByUserId(1L)).thenReturn(mockAccount);
 
         // when
         accountService.chargeAmount(info);
@@ -54,7 +54,7 @@ class AccountServiceTest {
         // given
         AccountInfo info = new AccountInfo(1L, 500L);
         Account mockAccount = mock(Account.class);
-        when(accountRepository.findByUserId(1L)).thenReturn(Optional.of(mockAccount));
+        when(accountRepository.getByUserId(1L)).thenReturn(mockAccount);
         when(mockAccount.canUse(500L)).thenReturn(true);
 
         // when
@@ -70,7 +70,7 @@ class AccountServiceTest {
     void retrieveAccount_shouldReturnAccount() throws Exception {
         // given
         Account account = new Account(1L, 1L, 5000L, LocalDateTime.now(), LocalDateTime.now());
-        when(accountRepository.findByUserId(1L)).thenReturn(Optional.of(account));
+        when(accountRepository.getByUserId(1L)).thenReturn(account);
 
         // when
         AccountResult result = accountService.retrieveAccount(1L);
@@ -101,7 +101,7 @@ class AccountServiceTest {
                 .sysCretDt(LocalDateTime.now())
                 .build();
 
-        when(accountRepository.findByUserId(3L)).thenReturn(Optional.of(account));
+        when(accountRepository.getByUserId(3L)).thenReturn(account);
         when(accountHistRepository.findAllByAccountId(1L)).thenReturn(List.of(history1, history2));
 
         // when
@@ -135,7 +135,7 @@ class AccountServiceTest {
     void chargeAmount_shouldThrowException_whenUserNotFound() {
         // given
         AccountInfo info = new AccountInfo(999L, 1000L);
-        when(accountRepository.findByUserId(999L)).thenReturn(Optional.empty());
+        when(accountRepository.getByUserId(999L)).thenReturn(null);
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.chargeAmount(info));
@@ -147,7 +147,7 @@ class AccountServiceTest {
     void useAmount_shouldThrowException_whenUserNotFound() {
         // given
         AccountInfo info = new AccountInfo(999L, 500L);
-        when(accountRepository.findByUserId(999L)).thenReturn(Optional.empty());
+        when(accountRepository.getByUserId(999L)).thenReturn(null);
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.useAmount(info));
@@ -158,7 +158,7 @@ class AccountServiceTest {
     @DisplayName("잔액 조회 시 존재하지 않는 유저일 경우 예외가 발생해야 한다")
     void retrieveAccount_shouldThrowException_whenUserNotFound() {
         // given
-        when(accountRepository.findByUserId(999L)).thenReturn(Optional.empty());
+        when(accountRepository.getByUserId(999L)).thenReturn(null);
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccount(999L));
@@ -169,7 +169,7 @@ class AccountServiceTest {
     @DisplayName("잔액 이력 조회 시 존재하지 않는 유저일 경우 예외가 발생해야 한다")
     void retrieveAccountHist_shouldThrowException_whenUserNotFound() {
         // given
-        when(accountRepository.findByUserId(999L)).thenReturn(Optional.empty());
+        when(accountRepository.getByUserId(999L)).thenReturn(null);
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccountHist(999L));

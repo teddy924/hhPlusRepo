@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.application.order;
 
-import kr.hhplus.be.server.application.coupon.CouponInfo;
+import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.domain.coupon.CouponDiscountType;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;

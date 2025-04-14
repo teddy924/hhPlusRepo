@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.domain.coupon.entity;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.server.application.coupon.CouponInfo;
-import kr.hhplus.be.server.application.coupon.CouponIssueInfo;
+import kr.hhplus.be.server.domain.coupon.CouponInfo;
+import kr.hhplus.be.server.domain.coupon.CouponIssueInfo;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
 import lombok.AllArgsConstructor;

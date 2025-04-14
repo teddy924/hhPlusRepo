@@ -1,7 +1,5 @@
-package kr.hhplus.be.server.application.payment;
+package kr.hhplus.be.server.domain.payment;
 
-import kr.hhplus.be.server.domain.payment.PaymentMethod;
-import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import lombok.Builder;
 
 import java.time.LocalDateTime;

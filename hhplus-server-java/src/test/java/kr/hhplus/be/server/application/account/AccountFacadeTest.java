@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.account;
 
 import kr.hhplus.be.server.domain.account.AccountHistType;
+import kr.hhplus.be.server.domain.account.AccountInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -2,7 +2,7 @@ package kr.hhplus.be.server.interfaces.coupon;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.application.coupon.CouponIssueCommand;
+import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.application.coupon.CouponService;
 import kr.hhplus.be.server.common.ResponseApi;
 import kr.hhplus.be.server.config.swagger.SwaggerError;

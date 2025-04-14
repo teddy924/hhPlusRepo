@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.application.account;
 
-import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
+import kr.hhplus.be.server.domain.account.AccountInfo;
 import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +21,7 @@ public class AccountService {
     // 잔액 충전
     public void chargeAmount (AccountInfo info) throws Exception {
 
-        Account account = accountRepository.findByUserId(info.userId())
-                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
+        Account account = accountRepository.getByUserId(info.userId());
 
         account.charge(info.amount());
 
@@ -34,8 +31,7 @@ public class AccountService {
     // 잔액 사용
     public void useAmount (AccountInfo info) throws Exception {
 
-        Account account = accountRepository.findByUserId(info.userId())
-                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
+        Account account = accountRepository.getByUserId(info.userId());
 
         if (account.canUse(info.amount())) {
             account.use(info.amount());
@@ -48,8 +44,7 @@ public class AccountService {
     // 잔액 조회
     public AccountResult retrieveAccount(Long userId) throws Exception {
 
-        Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
+        Account account = accountRepository.getByUserId(userId);
 
         return new AccountResult(account.getUserId(), account.getBalance());
 
@@ -58,8 +53,7 @@ public class AccountService {
     // 잔액 변동 이력 조회
     public List<AccountHistResult> retrieveAccountHist(Long userId) throws Exception {
 
-        Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_USER));
+        Account account = accountRepository.getByUserId(userId);
 
         List<AccountHistory> histories = accountHistRepository.findAllByAccountId(account.getId());
 
