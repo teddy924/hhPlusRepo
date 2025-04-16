@@ -9,7 +9,6 @@ import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.application.payment.PaymentService;
 import kr.hhplus.be.server.application.product.ProductService;
-import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.order.*;
 import kr.hhplus.be.server.domain.order.entity.*;
@@ -27,8 +26,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import static kr.hhplus.be.server.config.swagger.ErrorCode.NOT_EXIST_ORDER;
 
 @Service
 @RequiredArgsConstructor
@@ -174,11 +171,10 @@ public class OrderFacade {
 
     // 주문 상세 조회
     public OrderDetailResponseDTO retrieveOrderDetail(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_ORDER));
+        Order order = orderRepository.getById(orderId);
 
-        List<OrderItemDTO> items = orderItemRepository.findAllByOrderId(orderId);
-        OrderAddressDTO address = orderAddressRepository.findByOrderId(orderId);
+        List<OrderItemDTO> items = orderItemRepository.getDTOByOrderId(orderId);
+        OrderAddressDTO address = orderAddressRepository.getDTOByOrderId(orderId);
 
         Payment payment = paymentService.retrieveByOrderId(orderId);
         PaymentDTO paymentDto = PaymentDTO.from(payment);

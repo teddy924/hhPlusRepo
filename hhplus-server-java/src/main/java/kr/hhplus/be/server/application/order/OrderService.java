@@ -1,7 +1,6 @@
 package kr.hhplus.be.server.application.order;
 
 import kr.hhplus.be.server.domain.coupon.CouponInfo;
-import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.order.*;
 import kr.hhplus.be.server.domain.order.entity.*;
 import kr.hhplus.be.server.domain.product.entity.Product;
@@ -14,8 +13,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
-import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +37,9 @@ public class OrderService {
                 .orderStatus(OrderStatus.CREATED)
                 .build();
 
-        Long orderId = orderRepository.saveAndReturnId(order).orElseThrow(RuntimeException::new);
+        Long orderId = orderRepository.saveAndReturnId(order);
 
-        return orderRepository.findById(orderId).orElseThrow(() -> new CustomException(NOT_EXIST_ORDER));
+        return orderRepository.getById(orderId);
     }
 
     public Order buildOrder(Order order, OrderStatus orderStatus) {
@@ -117,27 +114,27 @@ public class OrderService {
     }
 
     public void saveOrderRelated(OrderSaveInfo orderSaveInfo) {
-        orderRepository.saveOrder(orderSaveInfo.order());
-        orderAddressRepository.saveOrderAddress(orderSaveInfo.orderAddress());
-        orderItemRepository.saveOrderItems(orderSaveInfo.orderItems());
-        orderCouponRepository.saveOrderCoupon(orderSaveInfo.orderCoupon());
-        orderHistoryRepository.saveOrderHistory(orderSaveInfo.orderHistory());
+        orderRepository.save(orderSaveInfo.order());
+        orderAddressRepository.save(orderSaveInfo.orderAddress());
+        orderItemRepository.save(orderSaveInfo.orderItems());
+        orderCouponRepository.save(orderSaveInfo.orderCoupon());
+        orderHistoryRepository.save(orderSaveInfo.orderHistory());
     }
 
     public OrderSaveInfo retrieveOrderInfo(Long orderId) {
 
         return OrderSaveInfo.builder()
-                .order(orderRepository.findById(orderId).orElseThrow(RuntimeException::new))
-                .orderAddress(orderAddressRepository.findAddressById(orderId))
-                .orderItems(orderItemRepository.findItemByOrderId(orderId))
-                .orderCoupon(orderCouponRepository.findCouponById(orderId).orElseThrow(RuntimeException::new))
-                .orderHistory(orderHistoryRepository.findHistoryById(orderId).orElseThrow(RuntimeException::new))
+                .order(orderRepository.getById(orderId))
+                .orderAddress(orderAddressRepository.getByOrderId(orderId))
+                .orderItems(orderItemRepository.getByOrderId(orderId))
+                .orderCoupon(orderCouponRepository.getByOrderId(orderId))
+                .orderHistory(orderHistoryRepository.getByOrderId(orderId))
                 .build();
 
     }
 
     public List<OrderResponseDTO> retrieveOrdersByUserId(Long userId) {
-        List<Order> orders = orderRepository.findAllByUserId(userId);
+        List<Order> orders = orderRepository.getAllByUserId(userId);
         return orders.stream()
                 .map(OrderResponseDTO::from)
                 .toList();

@@ -2,9 +2,11 @@ package kr.hhplus.be.server.application.product;
 
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
+@Builder
 public record ProductResult(
         Long productId
         , Long sellerId

@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 @Component
 public class ProductRankingPolicy {
 
-    public static final int LOOKBACK_DAYS = 3;
+    public int LOOK_DAYS = 3;
     public static final int TOP_COUNT = 5;
 
     public LocalDateTime getStartTime() {
-        return LocalDate.now().minusDays(LOOKBACK_DAYS).atStartOfDay();
+        return LocalDate.now().minusDays(LOOK_DAYS).atStartOfDay();
     }
 
     public LocalDateTime getEndTime() {

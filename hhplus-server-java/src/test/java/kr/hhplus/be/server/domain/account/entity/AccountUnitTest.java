@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AccountTest {
+class AccountUnitTest {
 
     @Test
-    @DisplayName("100원 단위로 충전 시 잔액이 증가한다")
+    @DisplayName("100원 단위로 충전 시 잔액이 증가")
     void charge_shouldIncreaseBalance() throws Exception {
         Account account = Account.builder().balance(1000L).build();
 
@@ -19,7 +19,7 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("100원 미만 단위로 충전 시 예외가 발생한다")
+    @DisplayName("100원 미만 단위로 충전 시 예외 발생")
     void charge_shouldThrow_whenInvalidUnit() {
         Account account = Account.builder().balance(1000L).build();
 
@@ -28,7 +28,7 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("사용 시 잔액이 감소한다")
+    @DisplayName("사용 시 잔액이 감소")
     void use_shouldDecreaseBalance() throws Exception {
         Account account = Account.builder().balance(1000L).build();
 
@@ -38,7 +38,7 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("100원 미만 단위로 사용 시 예외가 발생한다")
+    @DisplayName("100원 미만 단위로 사용 시 예외 발생")
     void use_shouldThrow_whenInvalidUnit() {
         Account account = Account.builder().balance(1000L).build();
 
@@ -47,7 +47,7 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("사용 금액이 잔액보다 많으면 canUse는 false를 반환한다")
+    @DisplayName("사용 금액이 잔액보다 많으면 canUse는 false를 리턴")
     void canUse_shouldReturnFalse_whenInsufficientBalance() {
         Account account = Account.builder().balance(500L).build();
 
@@ -57,7 +57,7 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("사용 금액이 잔액보다 적거나 같으면 canUse는 true를 반환한다")
+    @DisplayName("사용 금액이 잔액보다 적거나 같으면 canUse는 true를 리턴")
     void canUse_shouldReturnTrue_whenBalanceSufficient() {
         Account account = Account.builder().balance(1000L).build();
 
@@ -67,7 +67,7 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("100원 미만으로 충전 시 예외가 발생해야 한다")
+    @DisplayName("100원 미만으로 충전 시 예외 발생")
     void charge_shouldThrow_whenAmountBelowMinimum() {
         Account account = Account.builder().balance(1000L).build();
 
@@ -77,7 +77,7 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("100원 미만으로 사용할 경우 예외가 발생해야 한다")
+    @DisplayName("100원 미만으로 사용할 경우 예외 발생")
     void use_shouldThrow_whenAmountBelowMinimum() {
         Account account = Account.builder().balance(1000L).build();
 

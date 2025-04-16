@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AccountServiceTest {
+class AccountServiceUnitTest {
 
     @InjectMocks
     private AccountService accountService;
@@ -102,7 +102,7 @@ class AccountServiceTest {
                 .build();
 
         when(accountRepository.getByUserId(3L)).thenReturn(account);
-        when(accountHistRepository.findAllByAccountId(1L)).thenReturn(List.of(history1, history2));
+        when(accountHistRepository.getAllByAccountId(1L)).thenReturn(List.of(history1, history2));
 
         // when
         List<AccountHistResult> result = accountService.retrieveAccountHist(3L);

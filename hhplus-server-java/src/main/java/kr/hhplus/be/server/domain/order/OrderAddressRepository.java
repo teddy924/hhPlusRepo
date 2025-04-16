@@ -5,9 +5,9 @@ import kr.hhplus.be.server.interfaces.order.OrderAddressDTO;
 
 public interface OrderAddressRepository {
 
-    OrderAddress findAddressById(Long id);
+    OrderAddress getByOrderId(Long orderId);
 
-    void saveOrderAddress(OrderAddress orderAddress);
+    void save(OrderAddress orderAddress);
 
-    OrderAddressDTO findByOrderId(Long orderId);
+    OrderAddressDTO getDTOByOrderId(Long orderId);
 }

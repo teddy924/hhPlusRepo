@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CouponTest {
+class CouponUnitTest {
 
     @Test
-    @DisplayName("쿠폰 수량이 0이면 isExhausted는 true를 반환한다")
+    @DisplayName("쿠폰 수량이 0이면 isExhausted는 true 리턴")
     void isExhausted_shouldReturnTrue() {
         Coupon coupon = Coupon.builder().remainQuantity(0).build();
 
@@ -20,7 +20,7 @@ class CouponTest {
     }
 
     @Test
-    @DisplayName("쿠폰 수량이 1 이상이면 isExhausted는 false를 반환한다")
+    @DisplayName("쿠폰 수량이 1 이상이면 isExhausted는 false 리턴")
     void isExhausted_shouldReturnFalse() {
         Coupon coupon = Coupon.builder().remainQuantity(5).build();
 
@@ -28,7 +28,7 @@ class CouponTest {
     }
 
     @Test
-    @DisplayName("쿠폰 사용 시 수량이 차감된다")
+    @DisplayName("쿠폰 사용 시 수량 차감")
     void useOneQuantity_shouldDecreaseRemain() {
         Coupon coupon = Coupon.builder().remainQuantity(3).build();
 
@@ -38,7 +38,7 @@ class CouponTest {
     }
 
     @Test
-    @DisplayName("쿠폰 수량이 0이면 사용 시 예외가 발생한다")
+    @DisplayName("쿠폰 수량이 0이면 사용 시 예외 발생")
     void useOneQuantity_shouldThrow_whenExhausted() {
         Coupon coupon = Coupon.builder().remainQuantity(0).build();
 
@@ -48,7 +48,7 @@ class CouponTest {
     }
 
     @Test
-    @DisplayName("현재가 유효기간 안에 있으면 expiredCoupon 통과")
+    @DisplayName("쿠폰 유효기간이 유효하면 expiredCoupon 통과")
     void expiredCoupon_shouldPass_whenWithinPeriod() {
         Coupon coupon = Coupon.builder()
                 .efctStDt(LocalDateTime.now().minusDays(1))
@@ -59,7 +59,7 @@ class CouponTest {
     }
 
     @Test
-    @DisplayName("현재가 유효기간 밖이면 expiredCoupon에서 예외 발생")
+    @DisplayName("쿠폰 유효기간이 유효하지 않으면 expiredCoupon에서 예외 발생")
     void expiredCoupon_shouldThrow_whenOutOfPeriod() {
         Coupon coupon = Coupon.builder()
                 .efctStDt(LocalDateTime.now().minusDays(5))
@@ -72,7 +72,7 @@ class CouponTest {
     }
 
     @Test
-    @DisplayName("정액 할인 쿠폰은 할인 금액을 그대로 반환 (단, 최대 price까지)")
+    @DisplayName("정액 할인 쿠폰은 할인 금액을 그대로 반환")
     void calculateCoupon_shouldReturnFixedAmount() {
         Coupon coupon = Coupon.builder()
                 .discountType(CouponDiscountType.AMOUNT)

@@ -20,6 +20,7 @@ public enum ErrorCode {
     NOT_EXIST_USER(BAD_REQUEST.value(),"C-2002","사용자가 존재하지 않습니다."),
 
     // account
+    NOT_EXIST_ACCOUNT(BAD_REQUEST.value(),"C-2002","계좌가 존재하지 않습니다."),
     INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3001","충전/사용 금액은 100원 단위의 100원 이상이어야 합니다."),
 
     // product
@@ -39,6 +40,7 @@ public enum ErrorCode {
 
     // order
     NOT_EXIST_ORDER(BAD_REQUEST.value(),"C-6001","해당 주문 정보를 찾을 수 없습니다."),
+    NOT_EXIST_ORDER_ADDRESS(BAD_REQUEST.value(),"C-6001","해당 배송지 정보를 찾을 수 없습니다."),
 
     // payment
     NOT_EXIST_PAYMENT(BAD_REQUEST.value(),"C-7001","해당 결제 정보를 찾을 수 없습니다.")

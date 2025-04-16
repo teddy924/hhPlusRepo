@@ -17,14 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static kr.hhplus.be.server.domain.coupon.CouponDiscountType.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CouponServiceTest {
+class CouponServiceUnitTest {
 
     @InjectMocks
     private CouponService couponService;
@@ -46,8 +45,8 @@ class CouponServiceTest {
         Coupon coupon2 = new Coupon(11L, "20% 할인", RATE, 20L, 2000, 1500,LocalDateTime.now().minusDays(5L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(5L), null);
         Coupon coupon3 = new Coupon(12L, "30% 할인", RATE, 30L, 1000, 500,LocalDateTime.now().minusDays(5L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(5L), null);
 
-        when(couponIssueRepository.findAllByUserId(userId)).thenReturn(List.of(issue1, issue2));
-        when(couponRepository.findByCouponIds(List.of(10L, 11L))).thenReturn(List.of(coupon1, coupon2));
+        when(couponIssueRepository.getAllByUserId(userId)).thenReturn(List.of(issue1, issue2));
+        when(couponRepository.getByCouponIds(List.of(10L, 11L))).thenReturn(List.of(coupon1, coupon2));
 
         // when
         List<CouponResponseDTO> result = couponService.retrieveCouponList(userId);
@@ -60,7 +59,7 @@ class CouponServiceTest {
     @Test
     @DisplayName("보유 쿠폰이 없는 경우 예외 발생")
     void retrieveCouponList_shouldThrow_whenEmpty() {
-        when(couponIssueRepository.findAllByUserId(1L)).thenReturn(List.of());
+        when(couponIssueRepository.getAllByUserId(1L)).thenReturn(List.of());
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 couponService.retrieveCouponList(1L)
@@ -73,7 +72,7 @@ class CouponServiceTest {
     @DisplayName("쿠폰 발급 시 쿠폰이 존재하지 않으면 예외 발생")
     void issueCoupon_shouldThrow_whenCouponNotFound() {
         CouponIssueCommand couponIssueCommand = new CouponIssueCommand(1L, 1L);
-        when(couponRepository.findById(1L)).thenReturn(Optional.empty());
+        when(couponRepository.getById(1L)).thenReturn(null);
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 couponService.issueCoupon(couponIssueCommand)
@@ -83,7 +82,7 @@ class CouponServiceTest {
     }
 
     @Test
-    @DisplayName("유효기간이 만료된 쿠폰을 발급할 경우 예외가 발생해야 한다")
+    @DisplayName("유효기간이 만료된 쿠폰을 발급할 경우 예외 발생")
     void issueCoupon_shouldThrow_whenCouponExpired() {
         // given
         CouponIssueCommand couponIssueCommand = new CouponIssueCommand(1L, 10L);
@@ -101,7 +100,7 @@ class CouponServiceTest {
                 null
         );
 
-        when(couponRepository.findById(10L)).thenReturn(Optional.of(expiredCoupon));
+        when(couponRepository.getById(10L)).thenReturn(expiredCoupon);
 
         // when
         CustomException ex = assertThrows(CustomException.class, () ->
@@ -115,7 +114,7 @@ class CouponServiceTest {
     @Test
     @DisplayName("쿠폰 복구 시 존재하지 않으면 예외 발생")
     void restoreCoupon_shouldThrow_whenNotFound() {
-        when(couponIssueRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.empty());
+        when(couponIssueRepository.getByIdAndUserId(10L, 1L)).thenReturn(null);
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 couponService.restoreCouponUsage(1L, 10L)

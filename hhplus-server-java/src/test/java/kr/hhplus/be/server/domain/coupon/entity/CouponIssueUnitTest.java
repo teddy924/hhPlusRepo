@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CouponIssueTest {
+class CouponIssueUnitTest {
 
     @Test
     @DisplayName("쿠폰이 사용된 상태일 때 복구 시 상태가 ISSUED로 바뀌고 usedDt는 null이 되어야 한다")
@@ -33,7 +33,7 @@ class CouponIssueTest {
     }
 
     @Test
-    @DisplayName("쿠폰이 미사용 상태일 때 복구를 시도하면 예외가 발생해야 한다")
+    @DisplayName("쿠폰이 미사용 상태일 때 복구를 시도하면 예외 발생")
     void restore_shouldThrow_whenStatusIsNotUsed() {
         // given
         CouponIssue issue = CouponIssue.builder()

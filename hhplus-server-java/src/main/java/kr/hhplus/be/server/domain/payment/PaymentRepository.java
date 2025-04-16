@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public interface PaymentRepository {
 
-    void save(PaymentInfo paymentInfo);
+    void save(Payment payment);
 
     Optional<Payment> findByOrderId(Long orderId);
 

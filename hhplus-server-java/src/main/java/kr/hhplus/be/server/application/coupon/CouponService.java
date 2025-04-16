@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,7 +26,7 @@ public class CouponService {
     public List<CouponResponseDTO> retrieveCouponList (Long userId) {
 
         // 1. 발급 이력 조회
-        List<CouponIssue> couponIssueList =  couponIssueRepository.findAllByUserId(userId);
+        List<CouponIssue> couponIssueList =  couponIssueRepository.getAllByUserId(userId);
 
         if (couponIssueList.isEmpty()) {
             throw new CustomException(NOT_HAS_COUPON);
@@ -40,7 +39,7 @@ public class CouponService {
                 .toList();
 
         // 3. 쿠폰 ID로 쿠폰 조회
-        Map<Long, Coupon> couponMap = couponRepository.findByCouponIds(couponIds).stream()
+        Map<Long, Coupon> couponMap = couponRepository.getByCouponIds(couponIds).stream()
                 .collect(Collectors.toMap(Coupon::getId, Function.identity()));
 
         // 4. 쿠폰 이력 → CouponQueryDto 리스트로 변환
@@ -59,15 +58,13 @@ public class CouponService {
         CouponIssueInfo issueInfo = couponIssueCommand.toInfo();
 
         // 1. 쿠폰 유효여부 확인
-        Optional<Coupon> couponOpt = couponRepository.findById(issueInfo.couponId());
-
-        Coupon coupon = couponOpt.orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
+        Coupon coupon = couponRepository.getById(issueInfo.couponId());
 
         // 쿠폰 유효기간 유효 여부
         coupon.expiredCoupon();
 
         // 2. 쿠폰 기 발급 여부 확인
-        List<CouponIssue> couponIssueList = couponIssueRepository.findAllByUserId(issueInfo.userId());
+        List<CouponIssue> couponIssueList = couponIssueRepository.getAllByUserId(issueInfo.userId());
         issueInfo.couponIssueList().addAll(couponIssueList);
 
         // 3. 쿠폰 발급
@@ -84,12 +81,10 @@ public class CouponService {
     public CouponInfo retrieveCouponInfo (CouponIssueCommand couponIssueCommand) {
 
         // 1. 쿠폰 발급 이력 확인
-        CouponIssue issue = couponIssueRepository.findByUserIdAndCouponId(couponIssueCommand.userId(), couponIssueCommand.couponId())
-                .orElseThrow(() -> new CustomException(NOT_HAS_COUPON));
+        CouponIssue issue = couponIssueRepository.getByUserIdAndCouponId(couponIssueCommand.userId(), couponIssueCommand.couponId());
 
         // 2. 쿠폰 엔티티 조회
-        Coupon coupon = couponRepository.findById(couponIssueCommand.couponId())
-                .orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
+        Coupon coupon = couponRepository.getById(couponIssueCommand.couponId());
 
         // 3. 쿠폰 유효성 검사 (만료여부 확인)
         coupon.expiredCoupon();
@@ -112,8 +107,7 @@ public class CouponService {
 
     // 쿠폰 복구
     public void restoreCouponUsage(Long userId, Long couponIssueId) {
-        CouponIssue issue = couponIssueRepository.findByIdAndUserId(couponIssueId, userId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
+        CouponIssue issue = couponIssueRepository.getByIdAndUserId(couponIssueId, userId);
 
         issue.restore(); // domain method → status = ISSUED, usedDt = null
         couponIssueRepository.save(issue);

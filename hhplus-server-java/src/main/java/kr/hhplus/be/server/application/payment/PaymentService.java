@@ -3,9 +3,12 @@ package kr.hhplus.be.server.application.payment;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.domain.payment.PaymentRepository;
+import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import kr.hhplus.be.server.domain.payment.entity.Payment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
@@ -17,7 +20,26 @@ public class PaymentService {
 
     public void save (PaymentInfo paymentInfo) {
 
-        paymentRepository.save(paymentInfo);
+        Payment payment = new Payment();
+
+        if (paymentInfo.status() == PaymentStatus.COMPLETED) {
+            payment = Payment.builder()
+                    .orderId(paymentInfo.orderId())
+                    .amount(paymentInfo.amount())
+                    .paymentMethod(paymentInfo.method())
+                    .paymentStatus(paymentInfo.status())
+                    .paidDt(paymentInfo.paidAt())
+                    .sysCretDt(LocalDateTime.now())
+                    .build();
+        } else if (paymentInfo.status() == PaymentStatus.CANCELLED) {
+            payment = Payment.builder()
+                    .orderId(paymentInfo.orderId())
+                    .paymentStatus(paymentInfo.status())
+                    .sysChgDt(LocalDateTime.now())
+                    .build();
+        }
+
+        paymentRepository.save(payment);
 
     }
 

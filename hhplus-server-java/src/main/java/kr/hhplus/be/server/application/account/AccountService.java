@@ -55,7 +55,7 @@ public class AccountService {
 
         Account account = accountRepository.getByUserId(userId);
 
-        List<AccountHistory> histories = accountHistRepository.findAllByAccountId(account.getId());
+        List<AccountHistory> histories = accountHistRepository.getAllByAccountId(account.getId());
 
         return histories.stream()
                 .map(AccountHistResult::from)

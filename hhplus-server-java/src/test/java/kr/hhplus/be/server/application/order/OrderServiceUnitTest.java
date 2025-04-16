@@ -19,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static kr.hhplus.be.server.domain.product.ProductCategoryType.ACC;
 import static kr.hhplus.be.server.domain.product.ProductCategoryType.TENT;
@@ -27,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class OrderServiceTest {
+class OrderServiceUnitTest {
 
     @InjectMocks
     private OrderService orderService;
@@ -40,7 +39,7 @@ class OrderServiceTest {
     @Mock private OrderHistoryRepository orderHistoryRepository;
 
     @Test
-    @DisplayName("상품 목록의 가격 * 수량 총합을 계산한다")
+    @DisplayName("상품 목록의 가격 * 수량 총합을 계산")
     void calculateTotalAmount_success() {
         Product p1 = new Product(1L, 321L,"10인용 텐트", 5000L, null, TENT, LocalDateTime.now().minusDays(10L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(10L), null);
         Product p2 = new Product(3L, 321L,"초거대 랜턴", 3000L, null, ACC, LocalDateTime.now().minusDays(10L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(10L), null);
@@ -53,13 +52,13 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("주문 초기 저장 성공 시 ID로 조회된 주문이 반환되어야 한다")
+    @DisplayName("주문 초기 저장 성공 시 ID로 조회된 주문이 반환")
     void saveInitialOrder_success() {
         OrderInfo info = OrderInfo.builder().userId(1L).totPrice(5000L).build();
         Order order = Order.builder().id(10L).userId(1L).totalAmount(5000L).build();
 
-        when(orderRepository.saveAndReturnId(any())).thenReturn(Optional.of(10L));
-        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        when(orderRepository.saveAndReturnId(any())).thenReturn(10L);
+        when(orderRepository.getById(10L)).thenReturn(order);
 
         Order result = orderService.saveInitialOrder(info);
 
@@ -96,7 +95,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("관련 주문 정보들을 저장할 수 있어야 한다")
+    @DisplayName("주문 관련 정보들을 저장")
     void saveOrderRelated_shouldSaveAll() {
         Order order = mock(Order.class);
         OrderAddress addr = mock(OrderAddress.class);
@@ -114,28 +113,28 @@ class OrderServiceTest {
 
         orderService.saveOrderRelated(saveInfo);
 
-        verify(orderAddressRepository).saveOrderAddress(addr);
-        verify(orderItemRepository).saveOrderItems(List.of(item));
-        verify(orderCouponRepository).saveOrderCoupon(coupon);
-        verify(orderHistoryRepository).saveOrderHistory(hist);
+        verify(orderAddressRepository).save(addr);
+        verify(orderItemRepository).save(List.of(item));
+        verify(orderCouponRepository).save(coupon);
+        verify(orderHistoryRepository).save(hist);
     }
 
     @Test
-    @DisplayName("주문 ID로 모든 주문 관련 정보들을 조회한다")
+    @DisplayName("주문 ID로 모든 주문 관련 정보들을 조회")
     void retrieveOrderInfo_success() {
         Long orderId = 1L;
 
         Order order = Order.builder().id(orderId).build();
         OrderAddress addr = new OrderAddress(1L,10L,"우수리", "01011112222", "침대시", "자구싶동", "12345", null, LocalDateTime.now(), null);
-        Optional<OrderHistory> hist = Optional.of(new OrderHistory(1L, 10L, OrderHistoryStatus.PAID, null, LocalDateTime.now()));
+        OrderHistory hist = new OrderHistory(1L, 10L, OrderHistoryStatus.PAID, null, LocalDateTime.now());
         List<OrderItem> items = List.of(new OrderItem(1L, 10L, 14L, 3, 30000L, LocalDateTime.now(), null));
-        Optional<OrderCoupon> coupon = Optional.of(new OrderCoupon(1L, 10L, 22L, 1500L, LocalDateTime.now(), LocalDateTime.now(), null));
+        OrderCoupon coupon = new OrderCoupon(1L, 10L, 22L, 1500L, LocalDateTime.now(), LocalDateTime.now(), null);
 
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(orderAddressRepository.findAddressById(orderId)).thenReturn(addr);
-        when(orderHistoryRepository.findHistoryById(orderId)).thenReturn(hist);
-        when(orderItemRepository.findItemByOrderId(orderId)).thenReturn(items);
-        when(orderCouponRepository.findCouponById(orderId)).thenReturn(coupon);
+        when(orderRepository.getById(orderId)).thenReturn(order);
+        when(orderAddressRepository.getByOrderId(orderId)).thenReturn(addr);
+        when(orderHistoryRepository.getByOrderId(orderId)).thenReturn(hist);
+        when(orderItemRepository.getByOrderId(orderId)).thenReturn(items);
+        when(orderCouponRepository.getByOrderId(orderId)).thenReturn(coupon);
 
         OrderSaveInfo result = orderService.retrieveOrderInfo(orderId);
 
@@ -144,10 +143,10 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("유저 ID로 주문 목록을 조회한다")
+    @DisplayName("유저 ID로 주문 목록을 조회")
     void retrieveOrdersByUserId_success() {
         Order order = Order.builder().id(1L).userId(10L).totalAmount(5000L).build();
-        when(orderRepository.findAllByUserId(10L)).thenReturn(List.of(order));
+        when(orderRepository.getAllByUserId(10L)).thenReturn(List.of(order));
 
         List<OrderResponseDTO> result = orderService.retrieveOrdersByUserId(10L);
 

@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface AccountHistRepository {
 
-    List<AccountHistory> findAllByAccountId(Long AccountId);
+    List<AccountHistory> getAllByAccountId(Long AccountId);
 
     void save(AccountHistory accountHistory);
 
