@@ -8,6 +8,7 @@ import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.domain.order.*;
 import kr.hhplus.be.server.domain.order.entity.*;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import kr.hhplus.be.server.domain.user.entity.User;
 import kr.hhplus.be.server.interfaces.order.OrderResponseDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,15 +55,30 @@ class OrderServiceUnitTest {
     @Test
     @DisplayName("주문 초기 저장 성공 시 ID로 조회된 주문이 반환")
     void saveInitialOrder_success() {
-        OrderInfo info = OrderInfo.builder().userId(1L).totPrice(5000L).build();
-        Order order = Order.builder().id(10L).userId(1L).totalAmount(5000L).build();
+        // given
+        User user = User.builder().id(1L).name("테스트 유저").build();
+        OrderInfo info = OrderInfo.builder()
+                .userId(user.getId())
+                .totPrice(5000L)
+                .build();
+
+        Order expectedOrder = Order.builder()
+                .id(10L)
+                .user(user)
+                .totalAmount(5000L)
+                .orderStatus(OrderStatus.CREATED)
+                .build();
 
         when(orderRepository.saveAndReturnId(any())).thenReturn(10L);
-        when(orderRepository.getById(10L)).thenReturn(order);
+        when(orderRepository.getById(10L)).thenReturn(expectedOrder);
 
-        Order result = orderService.saveInitialOrder(info);
+        // when
+        Order result = orderService.saveInitialOrder(user, info);
 
+        // then
         assertEquals(10L, result.getId());
+        assertEquals(user.getId(), result.getUser().getId());
+        assertEquals(5000L, result.getTotalAmount());
     }
 
     @Test
@@ -77,21 +93,40 @@ class OrderServiceUnitTest {
         List<OrderItem> result = orderService.buildOrderItemList(order, orderMap);
 
         assertEquals(2, result.size());
-        assertEquals(10000L, result.get(0).getTotAmount());
+        assertEquals(10000L, result.get(0).getTotalAmount());
     }
 
     @Test
     @DisplayName("쿠폰 할인 금액 계산 및 OrderCoupon 생성")
     void buildOrderCoupon_success() {
+        User user = User.builder().id(1L).name("테스터").build();
+        Coupon coupon = Coupon.builder()
+                .id(10L)
+                .name("할인")
+                .discountType(CouponDiscountType.AMOUNT)
+                .discountValue(1000L)
+                .limitQuantity(3000)
+                .remainQuantity(1500)
+                .efctStDt(LocalDateTime.now().minusDays(10))
+                .efctFnsDt(LocalDateTime.now().plusDays(10))
+                .build();
+
+        CouponIssue issue = CouponIssue.builder()
+                .id(1L)
+                .user(user)
+                .coupon(coupon)
+                .status(CouponStatus.ISSUED)
+                .issuedDt(LocalDateTime.now())
+                .build();
+
         Order order = Order.builder().id(1L).build();
-        CouponIssue issue = new CouponIssue(1L, 1L, 10L, CouponStatus.ISSUED, LocalDateTime.now(), null);
-        Coupon coupon = new Coupon(10L, "할인", CouponDiscountType.AMOUNT, 1000L, 3000, 1500,
-                LocalDateTime.now().minusDays(10), LocalDateTime.now().plusDays(10), null, null);
         CouponInfo couponInfo = new CouponInfo(coupon, issue);
 
         OrderCoupon result = orderService.buildOrderCoupon(couponInfo, order, 5000L);
 
         assertEquals(1000L, result.getDiscountAmount());
+        assertEquals(order.getId(), result.getOrder().getId());
+        assertEquals(issue.getId(), result.getCouponIssueId());
     }
 
     @Test
@@ -125,15 +160,53 @@ class OrderServiceUnitTest {
         Long orderId = 1L;
 
         Order order = Order.builder().id(orderId).build();
-        OrderAddress addr = new OrderAddress(1L,10L,"우수리", "01011112222", "침대시", "자구싶동", "12345", null, LocalDateTime.now(), null);
-        OrderHistory hist = new OrderHistory(1L, 10L, OrderHistoryStatus.PAID, null, LocalDateTime.now());
-        List<OrderItem> items = List.of(new OrderItem(1L, 10L, 14L, 3, 30000L, LocalDateTime.now(), null));
-        OrderCoupon coupon = new OrderCoupon(1L, 10L, 22L, 1500L, LocalDateTime.now(), LocalDateTime.now(), null);
+
+        OrderAddress addr = OrderAddress.builder()
+                .id(1L)
+                .order(order)
+                .receiverName("우수리")
+                .phone("01011112222")
+                .address1("침대시")
+                .address2("자구싶동")
+                .zipcode("12345")
+                .sysCretDt(LocalDateTime.now())
+                .build();
+
+        OrderHistory hist = OrderHistory.builder()
+                .id(1L)
+                .order(order)
+                .status(OrderHistoryStatus.PAID)
+                .sysCretDt(LocalDateTime.now())
+                .build();
+
+        Product product = Product.builder().id(14L).name("매트리스").price(10000L).build();
+
+        OrderItem item = OrderItem.builder()
+                .id(1L)
+                .order(order)
+                .product(product)
+                .quantity(3)
+                .totalAmount(30000L)
+                .sysCretDt(LocalDateTime.now())
+                .build();
+
+        CouponIssue couponIssue = CouponIssue.builder()
+                .id(22L)
+                .build();
+
+        OrderCoupon coupon = OrderCoupon.builder()
+                .id(1L)
+                .order(order)
+                .couponIssueId(couponIssue.getId())
+                .discountAmount(1500L)
+                .usedDt(LocalDateTime.now())
+                .sysCretDt(LocalDateTime.now())
+                .build();
 
         when(orderRepository.getById(orderId)).thenReturn(order);
         when(orderAddressRepository.getByOrderId(orderId)).thenReturn(addr);
         when(orderHistoryRepository.getByOrderId(orderId)).thenReturn(hist);
-        when(orderItemRepository.getByOrderId(orderId)).thenReturn(items);
+        when(orderItemRepository.getByOrderId(orderId)).thenReturn(List.of(item));
         when(orderCouponRepository.getByOrderId(orderId)).thenReturn(coupon);
 
         OrderSaveInfo result = orderService.retrieveOrderInfo(orderId);
@@ -145,12 +218,25 @@ class OrderServiceUnitTest {
     @Test
     @DisplayName("유저 ID로 주문 목록을 조회")
     void retrieveOrdersByUserId_success() {
-        Order order = Order.builder().id(1L).userId(10L).totalAmount(5000L).build();
+        User user = User.builder()
+                .id(10L)
+                .name("홍길동")
+                .email("test@hhplus.kr")
+                .build();
+
+        Order order = Order.builder()
+                .id(1L)
+                .user(user)
+                .totalAmount(5000L)
+                .orderStatus(OrderStatus.CREATED)
+                .build();
+
         when(orderRepository.getAllByUserId(10L)).thenReturn(List.of(order));
 
         List<OrderResponseDTO> result = orderService.retrieveOrdersByUserId(10L);
 
         assertEquals(1, result.size());
         assertEquals(5000L, result.get(0).totalAmount());
+        assertEquals(OrderStatus.CREATED, result.get(0).orderStatus());
     }
 }

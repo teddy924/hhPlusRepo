@@ -4,6 +4,7 @@ import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.domain.order.*;
 import kr.hhplus.be.server.domain.order.entity.*;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import kr.hhplus.be.server.domain.user.entity.User;
 import kr.hhplus.be.server.interfaces.order.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,15 +31,14 @@ public class OrderService {
                 .sum();
     }
 
-    public Order saveInitialOrder(OrderInfo orderInfo) {
+    public Order saveInitialOrder(User user, OrderInfo orderInfo) {
         Order order = Order.builder()
-                .userId(orderInfo.userId())
+                .user(user)
                 .totalAmount(orderInfo.totPrice())
                 .orderStatus(OrderStatus.CREATED)
                 .build();
 
         Long orderId = orderRepository.saveAndReturnId(order);
-
         return orderRepository.getById(orderId);
     }
 
@@ -46,7 +46,7 @@ public class OrderService {
 
         return Order.builder()
                 .id(order.getId())
-                .userId(order.getUserId())
+                .user(order.getUser())
                 .totalAmount(order.getTotalAmount())
                 .orderStatus(orderStatus)
                 .sysCretDt(order.getSysCretDt())
@@ -57,7 +57,7 @@ public class OrderService {
     public OrderAddress buildOrderAddress(Order order, OrderAddressInfo orderAddressInfo) {
 
         return OrderAddress.builder()
-                .orderId(order.getId())
+                .order(order)
                 .receiverName(orderAddressInfo.receiverName())
                 .phone(orderAddressInfo.phone())
                 .address1(orderAddressInfo.address1())
@@ -78,10 +78,10 @@ public class OrderService {
                     Long quantity = entry.getValue();
 
                     return OrderItem.builder()
-                            .orderId(order.getId())
-                            .productId(product.getId())
+                            .order(order)
+                            .product(product)
                             .quantity(quantity.intValue())
-                            .totAmount(product.getPrice() * quantity)
+                            .totalAmount(product.getPrice() * quantity)
                             .build();
                 })
                 .toList());
@@ -94,7 +94,7 @@ public class OrderService {
     public OrderCoupon buildOrderCoupon(CouponInfo couponInfo, Order order, Long totProductPrice) {
 
         return OrderCoupon.builder()
-                .orderId(order.getId())
+                .order(order)
                 .couponIssueId(couponInfo.couponIssue().getId())
                 .discountAmount(couponInfo.coupon().calculateCoupon(totProductPrice))
                 .usedDt(LocalDateTime.now())
@@ -106,7 +106,7 @@ public class OrderService {
     public OrderHistory buildOrderHistory(Order order, OrderHistoryStatus status)  {
 
         return OrderHistory.builder()
-                .orderId(order.getId())
+                .order(order)
                 .status(status)
                 .sysCretDt(LocalDateTime.now())
                 .build();
@@ -114,11 +114,11 @@ public class OrderService {
     }
 
     public void saveOrderRelated(OrderSaveInfo orderSaveInfo) {
-        orderRepository.save(orderSaveInfo.order());
-        orderAddressRepository.save(orderSaveInfo.orderAddress());
-        orderItemRepository.save(orderSaveInfo.orderItems());
-        orderCouponRepository.save(orderSaveInfo.orderCoupon());
-        orderHistoryRepository.save(orderSaveInfo.orderHistory());
+        if (orderSaveInfo.order() != null) orderRepository.save(orderSaveInfo.order());
+        if (orderSaveInfo.orderAddress() != null) orderAddressRepository.save(orderSaveInfo.orderAddress());
+        if (orderSaveInfo.orderItems() != null) orderItemRepository.save(orderSaveInfo.orderItems());
+        if (orderSaveInfo.orderCoupon() != null) orderCouponRepository.save(orderSaveInfo.orderCoupon());
+        if (orderSaveInfo.orderHistory() != null) orderHistoryRepository.save(orderSaveInfo.orderHistory());
     }
 
     public OrderSaveInfo retrieveOrderInfo(Long orderId) {
@@ -139,7 +139,5 @@ public class OrderService {
                 .map(OrderResponseDTO::from)
                 .toList();
     }
-
-
 
 }

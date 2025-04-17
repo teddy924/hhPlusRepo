@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.user.entity;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.account.entity.Account;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,4 +33,10 @@ public class User {
 
     private LocalDateTime sysChgDt;
 
+    @OneToOne(mappedBy = "user")
+    private Account account;
+
+    public static User withId(Long id) {
+        return User.builder().id(id).build();
+    }
 }

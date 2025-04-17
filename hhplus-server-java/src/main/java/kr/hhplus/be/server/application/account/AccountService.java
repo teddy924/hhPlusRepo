@@ -9,6 +9,8 @@ import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -25,7 +27,6 @@ public class AccountService {
 
         account.charge(info.amount());
 
-        accountRepository.save(account);
     }
 
     // 잔액 사용
@@ -37,8 +38,6 @@ public class AccountService {
             account.use(info.amount());
         }
 
-        accountRepository.save(account);
-
     }
 
     // 잔액 조회
@@ -46,7 +45,7 @@ public class AccountService {
 
         Account account = accountRepository.getByUserId(userId);
 
-        return new AccountResult(account.getUserId(), account.getBalance());
+        return new AccountResult(account.getUser().getId(), account.getBalance());
 
     }
 
@@ -55,7 +54,10 @@ public class AccountService {
 
         Account account = accountRepository.getByUserId(userId);
 
-        List<AccountHistory> histories = accountHistRepository.getAllByAccountId(account.getId());
+        List<AccountHistory> histories = accountHistRepository.getAllByAccountId(account.getId())
+                .stream()
+                .sorted(Comparator.comparing(AccountHistory::getSysCretDt).reversed())
+                .toList();
 
         return histories.stream()
                 .map(AccountHistResult::from)
@@ -67,10 +69,13 @@ public class AccountService {
     // 잔액 변동 이력 저장
     public void saveHist(AccountInfo info, AccountHistType histType) {
 
+        Account account = accountRepository.getByUserId(info.userId());
+
         AccountHistory history = AccountHistory.builder()
-                .accountId(info.userId())
+                .account(account) // 연관된 Account 엔티티 직접 설정
                 .status(histType)
-                .balance(info.amount())
+                .amount(info.amount())
+                .sysCretDt(LocalDateTime.now())
                 .build();
 
         accountHistRepository.save(history);

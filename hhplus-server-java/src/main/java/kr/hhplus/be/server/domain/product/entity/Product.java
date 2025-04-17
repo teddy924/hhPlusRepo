@@ -35,6 +35,7 @@ public class Product {
 
     private Integer stock;
 
+    @Enumerated(EnumType.STRING)
     private ProductCategoryType category;
 
     private LocalDateTime efctStDt;

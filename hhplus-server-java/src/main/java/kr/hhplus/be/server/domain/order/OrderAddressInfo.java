@@ -1,7 +1,10 @@
 package kr.hhplus.be.server.domain.order;
 
+import lombok.Builder;
+
 import java.time.LocalDateTime;
 
+@Builder
 public record OrderAddressInfo (
         Long orderId,
         String receiverName,

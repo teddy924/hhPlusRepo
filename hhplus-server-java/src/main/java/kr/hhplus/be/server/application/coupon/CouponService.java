@@ -9,9 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
@@ -23,58 +20,41 @@ public class CouponService {
     private final CouponIssueRepository couponIssueRepository;
 
     // 보유 쿠폰 목록 조회
-    public List<CouponResponseDTO> retrieveCouponList (Long userId) {
-
+    public List<CouponResponseDTO> retrieveCouponList(Long userId) {
         // 1. 발급 이력 조회
-        List<CouponIssue> couponIssueList =  couponIssueRepository.getAllByUserId(userId);
+        List<CouponIssue> couponIssueList = couponIssueRepository.getAllByUserId(userId);
 
         if (couponIssueList.isEmpty()) {
             throw new CustomException(NOT_HAS_COUPON);
         }
 
-        // 2. 쿠폰 ID 목록 추출
-        List<Long> couponIds = couponIssueList.stream()
-                .map(CouponIssue::getCouponId)
-                .distinct()
-                .toList();
-
-        // 3. 쿠폰 ID로 쿠폰 조회
-        Map<Long, Coupon> couponMap = couponRepository.getByCouponIds(couponIds).stream()
-                .collect(Collectors.toMap(Coupon::getId, Function.identity()));
-
-        // 4. 쿠폰 이력 → CouponQueryDto 리스트로 변환
+        // 2. 발급 이력에서 바로 Coupon 가져와 DTO로 매핑
         return couponIssueList.stream()
-                .map(issue -> {
-                    Coupon coupon = couponMap.get(issue.getCouponId());
-                    return CouponResponseDTO.from(coupon, issue);
-                })
+                .map(issue -> CouponResponseDTO.from(issue.getCoupon(), issue))
                 .toList();
-
     }
 
     // 쿠폰 발급
-    public void issueCoupon (CouponIssueCommand couponIssueCommand) {
-
+    public void issueCoupon(CouponIssueCommand couponIssueCommand) {
         CouponIssueInfo issueInfo = couponIssueCommand.toInfo();
 
-        // 1. 쿠폰 유효여부 확인
+        // 1. 쿠폰 유효성 확인
         Coupon coupon = couponRepository.getById(issueInfo.couponId());
+        coupon.expiredCoupon(); // 유효기간 확인
 
-        // 쿠폰 유효기간 유효 여부
-        coupon.expiredCoupon();
+        // 2. 중복 발급 검사
+        List<CouponIssue> alreadyIssuedList = couponIssueRepository.getAllByUserId(issueInfo.userId());
+        issueInfo.addExistingIssues(alreadyIssuedList); // 내부 리스트에 추가
 
-        // 2. 쿠폰 기 발급 여부 확인
-        List<CouponIssue> couponIssueList = couponIssueRepository.getAllByUserId(issueInfo.userId());
-        issueInfo.couponIssueList().addAll(couponIssueList);
+        // 3. 중복 발급 확인 (CouponIssue 내부에서 책임지도록 위임)
+        CouponIssue issue = CouponIssue.create(issueInfo); // 예외 포함
 
-        // 3. 쿠폰 발급
+        // 4. 재고 차감
         coupon.useOneQuantity();
         couponRepository.save(coupon);
 
-        // 4. 쿠폰 발급 이력 저장
-        CouponIssue issue = new CouponIssue().issue(issueInfo);
+        // 5. 발급 이력 저장
         couponIssueRepository.save(issue);
-
     }
 
     // 쿠폰 조회(쿠폰 정보, 이력)
@@ -99,18 +79,24 @@ public class CouponService {
     // 쿠폰 사용
     public void useCoupon (CouponInfo couponInfo) {
 
-        CouponIssue issue =  new CouponIssue().use(couponInfo);
-
-        couponIssueRepository.save(issue);
+        try {
+            CouponIssue issue = couponInfo.couponIssue();
+            issue.markAsUsed();
+        } catch (Exception e) {
+            throw new CustomException(FAIL_USE_COUPON);
+        }
 
     }
 
     // 쿠폰 복구
-    public void restoreCouponUsage(Long userId, Long couponIssueId) {
-        CouponIssue issue = couponIssueRepository.getByIdAndUserId(couponIssueId, userId);
+    public void restoreCoupon(Long userId, Long couponIssueId) {
 
-        issue.restore(); // domain method → status = ISSUED, usedDt = null
-        couponIssueRepository.save(issue);
+        try {
+            CouponIssue issue = couponIssueRepository.getByIdAndUserId(couponIssueId, userId);
+            issue.restore(); // domain method → status = ISSUED, usedDt = null
+        } catch (Exception e) {
+            throw new CustomException(FAIL_RESTORE_COUPON);
+        }
     }
 
 

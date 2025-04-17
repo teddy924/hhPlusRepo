@@ -40,6 +40,6 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public List<Order> getBySysCretDtBetween(LocalDateTime start, LocalDateTime end) {
-        return jpaOrderRepository.findAllBySysCretDtBetween(start, end);
+        return jpaOrderRepository.findBySysCretDtBetween(start, end);
     }
 }

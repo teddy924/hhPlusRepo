@@ -15,6 +15,6 @@ public interface JpaOrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findAllByUserId(Long userId);
 
-    List<Order> findAllBySysCretDtBetween(LocalDateTime start, LocalDateTime end);
+    List<Order> findBySysCretDtBetween(LocalDateTime start, LocalDateTime end);
 
 }

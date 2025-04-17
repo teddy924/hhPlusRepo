@@ -47,13 +47,13 @@ class AccountUnitTest {
     }
 
     @Test
-    @DisplayName("사용 금액이 잔액보다 많으면 canUse는 false를 리턴")
+    @DisplayName("사용 금액이 잔액보다 많으면 예외 발생")
     void canUse_shouldReturnFalse_whenInsufficientBalance() {
         Account account = Account.builder().balance(500L).build();
 
-        boolean result = account.canUse(1000L);
+        CustomException ex = assertThrows(CustomException.class, () -> account.canUse(1000L));
+        assertTrue(ex.getMessage().contains("잔액이 부족합니다."));
 
-        assertFalse(result);
     }
 
     @Test

@@ -13,7 +13,7 @@ public interface JpaOrderAddressRepository extends JpaRepository<OrderAddress, L
     @NonNull
     Optional<OrderAddress> findByOrderId(@NonNull Long orderId);
 
-    @Query("SELECT new kr.hhplus.be.server.interfaces.order.OrderAddressDTO(A.orderId, A.receiverName, A.phone, A.address1, A.address2, A.zipcode, A.memo, A.sysCretDt, A.sysChgDt) " +
-            "FROM OrderAddress A WHERE A.orderId = :orderId")
+    @Query("SELECT new kr.hhplus.be.server.interfaces.order.OrderAddressDTO(A.order.id, A.receiverName, A.phone, A.address1, A.address2, A.zipcode, A.memo, A.sysCretDt, A.sysChgDt) " +
+            "FROM OrderAddress A WHERE A.order.id = :orderId")
     Optional<OrderAddressDTO> findDTOByOrderId(Long orderId);
 }

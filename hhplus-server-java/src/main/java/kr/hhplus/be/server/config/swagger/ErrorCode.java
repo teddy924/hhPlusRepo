@@ -20,14 +20,18 @@ public enum ErrorCode {
     NOT_EXIST_USER(BAD_REQUEST.value(),"C-2002","사용자가 존재하지 않습니다."),
 
     // account
-    NOT_EXIST_ACCOUNT(BAD_REQUEST.value(),"C-2002","계좌가 존재하지 않습니다."),
-    INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3001","충전/사용 금액은 100원 단위의 100원 이상이어야 합니다."),
+    NOT_EXIST_ACCOUNT(BAD_REQUEST.value(),"C-3001","계좌가 존재하지 않습니다."),
+    INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3002","충전/사용 금액은 100원 단위의 100원 이상이어야 합니다."),
+    INVALID_USE_AMOUNT(BAD_REQUEST.value(),"C-3003","잔액이 부족합니다."),
 
     // product
     OUT_OF_STOCK(BAD_REQUEST.value(),"C-4001","상품이 품절 상태 입니다."),
     NOT_EXIST_PRODUCT(BAD_REQUEST.value(),"C-4002","해당 상품이 존재하지 않습니다."),
-    INVALID_PRODUCT(BAD_REQUEST.value(),"C-4002","유효하지 않은 상품입니다."),
-    INVALID_QUANTITY(BAD_REQUEST.value(),"C-4002","유효하지 않은 상품 수량 입니다."),
+    NOT_EXIST_PRODUCT_CATEGORY(BAD_REQUEST.value(),"C-4003","해당 상품 분류가 존재하지 않습니다."),
+    INVALID_PRODUCT(BAD_REQUEST.value(),"C-4004","유효하지 않은 상품입니다."),
+    INVALID_QUANTITY(BAD_REQUEST.value(),"C-4005","유효하지 않은 상품 수량 입니다."),
+    FAIL_DECREASE_STOCK(BAD_REQUEST.value(),"C-4006","상품 재고 차감에 실패하였습니다."),
+    FAIL_RESTORE_STOCK(BAD_REQUEST.value(),"C-4007","상품 재고 복구에 실패하였습니다."),
 
     // coupon
     NOT_HAS_COUPON(BAD_REQUEST.value(),"C-5001","보유하고 있는 쿠폰이 없습니다."),
@@ -37,10 +41,12 @@ public enum ErrorCode {
     DUPLICATE_ISSUE_COUPON(BAD_REQUEST.value(),"C-5005","이미 쿠폰을 받은 발급자 입니다."),
     ALREADY_USED_COUPON(BAD_REQUEST.value(),"C-5006","이미 사용된 쿠폰입니다."),
     INVALID_COUPON_RESTORE(BAD_REQUEST.value(),"C-5007","복구 대상 쿠폰이 아닙니다."),
+    FAIL_USE_COUPON(BAD_REQUEST.value(),"C-5008","쿠폰 사용에 실패하였습니다."),
+    FAIL_RESTORE_COUPON(BAD_REQUEST.value(),"C-5009","쿠폰 복구에 실패하였습니다."),
 
-    // order
+    // order,
     NOT_EXIST_ORDER(BAD_REQUEST.value(),"C-6001","해당 주문 정보를 찾을 수 없습니다."),
-    NOT_EXIST_ORDER_ADDRESS(BAD_REQUEST.value(),"C-6001","해당 배송지 정보를 찾을 수 없습니다."),
+    NOT_EXIST_ORDER_ADDRESS(BAD_REQUEST.value(),"C-6002","해당 배송지 정보를 찾을 수 없습니다."),
 
     // payment
     NOT_EXIST_PAYMENT(BAD_REQUEST.value(),"C-7001","해당 결제 정보를 찾을 수 없습니다.")

@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.payment;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.domain.order.entity.Order;
 import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.domain.payment.PaymentRepository;
 import kr.hhplus.be.server.domain.payment.PaymentStatus;
@@ -18,13 +19,13 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
-    public void save (PaymentInfo paymentInfo) {
+    public void save (Order order, PaymentInfo paymentInfo) {
 
         Payment payment = new Payment();
 
         if (paymentInfo.status() == PaymentStatus.COMPLETED) {
             payment = Payment.builder()
-                    .orderId(paymentInfo.orderId())
+                    .order(order)
                     .amount(paymentInfo.amount())
                     .paymentMethod(paymentInfo.method())
                     .paymentStatus(paymentInfo.status())
@@ -33,7 +34,7 @@ public class PaymentService {
                     .build();
         } else if (paymentInfo.status() == PaymentStatus.CANCELLED) {
             payment = Payment.builder()
-                    .orderId(paymentInfo.orderId())
+                    .order(order)
                     .paymentStatus(paymentInfo.status())
                     .sysChgDt(LocalDateTime.now())
                     .build();

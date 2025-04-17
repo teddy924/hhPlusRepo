@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.product;
 
+import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.order.OrderItemRepository;
 import kr.hhplus.be.server.domain.order.OrderRepository;
 import kr.hhplus.be.server.domain.order.entity.Order;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 import static kr.hhplus.be.server.domain.product.ProductRankingPolicy.*;
 
 @Service
@@ -30,10 +32,12 @@ public class ProductFacade {
 
     public List<ProductSalesResult> retrieveTopProducts(String category) {
 
-        // 카테고리 null 방어
         ProductCategoryType parsedCategory = null;
-        if (category != null && !category.isBlank()) {
-            parsedCategory = ProductCategoryType.valueOf(category.toUpperCase());
+
+        if (category != null) {
+            // 카테고리 유효성 체크
+            parsedCategory = ProductCategoryType.valueOfIgnoreCase(category)
+                    .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT_CATEGORY));
         }
 
         LocalDateTime start = productRankingPolicy.getStartTime();
@@ -51,9 +55,9 @@ public class ProductFacade {
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
         // 5. 상품아이디 별 판매수량 추출
         Map<Long, Integer> productToSales = items.stream()
-                .filter(item -> productMap.containsKey(item.getProductId()))
+                .filter(item -> productMap.containsKey(item.getProduct().getId()))
                 .collect(Collectors.groupingBy(
-                        OrderItem::getProductId,
+                        item -> item.getProduct().getId(),
                         Collectors.summingInt(OrderItem::getQuantity)
                 ));
         // 6. 정렬 및 제한 개수만큼 ProductSalesResult(상품 상세정보, 판매량) 생성

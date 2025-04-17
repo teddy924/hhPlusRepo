@@ -11,5 +11,7 @@ public record CouponIssueInfo(
         Long couponId,
         List<CouponIssue> couponIssueList
 ) {
-
+    public void addExistingIssues(List<CouponIssue> existingIssues) {
+        this.couponIssueList().addAll(existingIssues);
+    }
 }

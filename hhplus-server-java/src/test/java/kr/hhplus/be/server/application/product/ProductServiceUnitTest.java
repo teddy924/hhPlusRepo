@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.product;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
@@ -67,7 +68,7 @@ class ProductServiceUnitTest {
     @Test
     @DisplayName("존재하지 않는 상품 ID 조회 시 예외 발생")
     void retrieveDetail_shouldThrow_whenProductNotFound() {
-        when(productRepository.getById(99L)).thenReturn(null);
+        when(productRepository.getById(99L)).thenThrow(new CustomException(ErrorCode.NOT_EXIST_PRODUCT));
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 productService.retrieveDetail(99L));
@@ -90,10 +91,11 @@ class ProductServiceUnitTest {
     @Test
     @DisplayName("존재하지 않는 상품 재고 감소 시 예외")
     void decreaseStock_shouldThrow_whenProductNotFound() {
-        when(productRepository.getById(999L)).thenReturn(null);
+        when(productRepository.getById(999L)).thenThrow(new CustomException(ErrorCode.NOT_EXIST_PRODUCT));
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 productService.decreaseStock(999L, 5));
+
 
         assertTrue(ex.getMessage().contains("해당 상품이 존재하지 않습니다."));
     }

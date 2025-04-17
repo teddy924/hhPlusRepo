@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.product;
 
+import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
+
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -20,10 +23,12 @@ public class ProductService {
     // 상품 목록 조회
     public List<ProductResult> retrieveAll (String category) {
 
-        ProductCategoryType categoryType = null;
+        ProductCategoryType parsedCategory = null;
 
-        if (category != null && !category.isEmpty()) {
-            categoryType = ProductCategoryType.valueOf(category.toUpperCase());
+        if (category != null) {
+            // 카테고리 유효성 체크
+            parsedCategory = ProductCategoryType.valueOfIgnoreCase(category)
+                    .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT_CATEGORY));
         }
 
         List<Product> productList = new ArrayList<>();
@@ -32,7 +37,7 @@ public class ProductService {
             productList = productRepository.getAll();
         }
         else {
-            productList = productRepository.getByCategory(categoryType);
+            productList = productRepository.getByCategory(parsedCategory);
         }
 
         return productList.stream().map(ProductResult::from).toList();
@@ -54,17 +59,19 @@ public class ProductService {
     }
 
     public void decreaseStock(Long productId, int quantity) {
-        Product product = productRepository.getById(productId);
-
-        product.decreaseStock(quantity); // 도메인 로직 위임
-        productRepository.save(product);
+            Product product = productRepository.getById(productId);
+            product.decreaseStock(quantity);
+            productRepository.save(product);
     }
 
     public void restoreStock(Long productId, int quantity) {
-        Product product = productRepository.getById(productId);
-
-        product.increaseStock(quantity); // domain method
-        productRepository.save(product);
+        try {
+            Product product = productRepository.getById(productId);
+            product.increaseStock(quantity);
+            productRepository.save(product);
+        } catch (Exception e) {
+            throw new CustomException(FAIL_RESTORE_STOCK);
+        }
     }
 
     public Map<Product, Long> processOrderProducts(Map<Long, Long> productGrp) {

@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.order;
 
+import jakarta.transaction.Transactional;
 import kr.hhplus.be.server.domain.account.AccountInfo;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.domain.coupon.CouponApplyInfo;
@@ -16,6 +17,8 @@ import kr.hhplus.be.server.domain.payment.PaymentMethod;
 import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import kr.hhplus.be.server.domain.payment.entity.Payment;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.domain.user.entity.User;
 import kr.hhplus.be.server.interfaces.order.OrderAddressDTO;
 import kr.hhplus.be.server.interfaces.order.OrderDetailResponseDTO;
 import kr.hhplus.be.server.interfaces.order.OrderItemDTO;
@@ -40,7 +43,9 @@ public class OrderFacade {
     private final OrderRepository orderRepository;
     private final OrderAddressRepository orderAddressRepository;
     private final OrderItemRepository orderItemRepository;
+    private final UserRepository userRepository;
 
+    @Transactional
     // 주문 + 결제
     public void order(OrderCommand command) throws Exception {
 
@@ -61,32 +66,37 @@ public class OrderFacade {
         }
 
         // 3. 주문 저장
-        Order order = orderService.saveInitialOrder(
-                OrderInfo.builder()
-                        .userId(command.userId())
-                        .productGrp(command.productGrp())
-                        .couponId(command.couponId())
-                        .totPrice(couponApplyInfo.finalPayableAmount())
-                        .build()
-        );
+        User user = userRepository.getById(command.userId());
+
+        OrderInfo.OrderInfoBuilder orderInfoBuilder = OrderInfo.builder()
+                .userId(user.getId())
+                .productGrp(command.productGrp())
+                .totPrice(totalPrice);
+
+        OrderInfo orderInfo = orderInfoBuilder.build();
+
+        Order order = orderService.saveInitialOrder(user, orderInfo);
 
         // 4. 결제 처리 (잔액 차감 + 이력 저장 + 결제 이력 저장)
-        processPayment(command.userId(), couponApplyInfo.finalPayableAmount(), order.getId());
+        processPayment(command.userId(), couponApplyInfo.finalPayableAmount(), order);
 
         // 5. 주문 상세 정보 저장
         OrderCoupon orderCoupon = null;
-        if (couponInfo != null && couponInfo.couponIssue().getCouponId() != null) {
+        if (couponInfo != null && couponInfo.couponIssue().getCoupon().getId() != null) {
             orderCoupon = orderService.buildOrderCoupon(couponInfo, order, couponApplyInfo.discountAmount());
         }
 
-        OrderSaveInfo orderSaveInfo = OrderSaveInfo.builder()
+        OrderSaveInfo.OrderSaveInfoBuilder builder = OrderSaveInfo.builder()
                 .order(order)
                 .orderAddress(orderService.buildOrderAddress(order, command.orderAddressInfo()))
                 .orderItems(orderService.buildOrderItemList(order, orderProductMap))
-                .orderCoupon(orderCoupon)
-                .orderHistory(orderService.buildOrderHistory(order, OrderHistoryStatus.PAID))
-                .build();
+                .orderHistory(orderService.buildOrderHistory(order, OrderHistoryStatus.PAID));
 
+        if (orderCoupon != null) {
+            builder.orderCoupon(orderCoupon);
+        }
+
+        OrderSaveInfo orderSaveInfo = builder.build();
         orderService.saveOrderRelated(orderSaveInfo);
 
         // 6. 쿠폰 사용 처리
@@ -96,10 +106,11 @@ public class OrderFacade {
 
         // 7. 상품 수량 차감
         orderSaveInfo.orderItems().forEach(item ->
-                productService.decreaseStock(item.getProductId(), item.getQuantity())
+                productService.decreaseStock(item.getProduct().getId(), item.getQuantity())
         );
     }
 
+    @Transactional
     // 주문 취소
     public void cancel(OrderCancelCommand command) throws Exception {
 
@@ -120,7 +131,7 @@ public class OrderFacade {
         // 5. 잔액 복구
         accountService.chargeAmount(
                 AccountInfo.builder()
-                        .userId(order.getUserId())
+                        .userId(order.getUser().getId())
                         .amount(order.getTotalAmount()) // 또는 orderPayment.getAmount()
                         .build()
         );
@@ -128,7 +139,7 @@ public class OrderFacade {
         // 6. 잔액 이력 저장
         accountService.saveHist(
                 AccountInfo.builder()
-                        .userId(order.getUserId())
+                        .userId(order.getUser().getId())
                         .amount(order.getTotalAmount())
                         .build(),
                 AccountHistType.REFUND
@@ -136,6 +147,7 @@ public class OrderFacade {
 
         // 7. 결제 상태 변경
         paymentService.save(
+                order,
                 PaymentInfo.builder()
                         .orderId(command.orderId())
                         .status(PaymentStatus.CANCELLED)
@@ -145,28 +157,28 @@ public class OrderFacade {
 
         // 8. 쿠폰 복구
         if (orderSaveInfo.orderCoupon() != null) {
-            couponService.restoreCouponUsage(order.getUserId(), orderSaveInfo.orderCoupon().getCouponIssueId());
+            couponService.restoreCoupon(order.getUser().getId(), orderSaveInfo.orderCoupon().getCouponIssueId());
         }
 
         // 9. 상품 수량 복구
-        orderSaveInfo.orderItems().forEach(item -> productService.restoreStock(item.getProductId(), item.getQuantity()));
+        orderSaveInfo.orderItems().forEach(item -> productService.restoreStock(item.getProduct().getId(), item.getQuantity()));
     }
 
     // 결제처리
-    private void processPayment(Long userId, Long amount, Long orderId) throws Exception {
+    private void processPayment(Long userId, Long amount, Order order) throws Exception {
         AccountInfo accountInfo = AccountInfo.builder().userId(userId).amount(amount).build();
 
         accountService.useAmount(accountInfo);
         accountService.saveHist(accountInfo, AccountHistType.USE);
 
-        paymentService.save(PaymentInfo.builder()
-                .orderId(orderId)
+        PaymentInfo paymentInfo = PaymentInfo.builder()
                 .amount(amount)
                 .method(PaymentMethod.BALANCE)
                 .status(PaymentStatus.COMPLETED)
                 .paidAt(LocalDateTime.now())
-                .build()
-        );
+                .build();
+
+        paymentService.save(order, paymentInfo);
     }
 
     // 주문 상세 조회
@@ -182,4 +194,5 @@ public class OrderFacade {
 
         return OrderDetailResponseDTO.from(order, items, address, paymentDto, order.getOrderStatus());
     }
+
 }

@@ -1,12 +1,14 @@
 package kr.hhplus.be.server.application.coupon;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.CouponRepository;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
+import kr.hhplus.be.server.domain.user.entity.User;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,14 +41,39 @@ class CouponServiceUnitTest {
     void retrieveCouponList_success() {
         // given
         Long userId = 1L;
-        CouponIssue issue1 = new CouponIssue(1L, userId, 10L, CouponStatus.ISSUED, LocalDateTime.now(), null);
-        CouponIssue issue2 = new CouponIssue(2L, userId, 11L, CouponStatus.ISSUED, LocalDateTime.now(), null);
-        Coupon coupon1 = new Coupon(10L, "10% 할인", RATE, 10L, 3000, 1500,LocalDateTime.now().minusDays(5L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(5L), null);
-        Coupon coupon2 = new Coupon(11L, "20% 할인", RATE, 20L, 2000, 1500,LocalDateTime.now().minusDays(5L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(5L), null);
-        Coupon coupon3 = new Coupon(12L, "30% 할인", RATE, 30L, 1000, 500,LocalDateTime.now().minusDays(5L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(5L), null);
+        User user = User.builder().id(userId).name("tester").build();
+
+        Coupon coupon1 = Coupon.builder().id(10L).name("10% 할인").discountType(RATE).discountValue(10L)
+                .limitQuantity(3000).remainQuantity(1500)
+                .efctStDt(LocalDateTime.now().minusDays(5))
+                .efctFnsDt(LocalDateTime.now().plusDays(30))
+                .sysCretDt(LocalDateTime.now().minusDays(5))
+                .build();
+
+        Coupon coupon2 = Coupon.builder().id(11L).name("20% 할인").discountType(RATE).discountValue(20L)
+                .limitQuantity(2000).remainQuantity(1500)
+                .efctStDt(LocalDateTime.now().minusDays(5))
+                .efctFnsDt(LocalDateTime.now().plusDays(30))
+                .sysCretDt(LocalDateTime.now().minusDays(5))
+                .build();
+
+        CouponIssue issue1 = CouponIssue.builder()
+                .id(1L)
+                .user(user)
+                .coupon(coupon1)
+                .status(CouponStatus.ISSUED)
+                .issuedDt(LocalDateTime.now())
+                .build();
+
+        CouponIssue issue2 = CouponIssue.builder()
+                .id(2L)
+                .user(user)
+                .coupon(coupon2)
+                .status(CouponStatus.ISSUED)
+                .issuedDt(LocalDateTime.now())
+                .build();
 
         when(couponIssueRepository.getAllByUserId(userId)).thenReturn(List.of(issue1, issue2));
-        when(couponRepository.getByCouponIds(List.of(10L, 11L))).thenReturn(List.of(coupon1, coupon2));
 
         // when
         List<CouponResponseDTO> result = couponService.retrieveCouponList(userId);
@@ -72,7 +99,8 @@ class CouponServiceUnitTest {
     @DisplayName("쿠폰 발급 시 쿠폰이 존재하지 않으면 예외 발생")
     void issueCoupon_shouldThrow_whenCouponNotFound() {
         CouponIssueCommand couponIssueCommand = new CouponIssueCommand(1L, 1L);
-        when(couponRepository.getById(1L)).thenReturn(null);
+        when(couponRepository.getById(anyLong()))
+                .thenThrow(new CustomException(ErrorCode.NOT_EXIST_COUPON));
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 couponService.issueCoupon(couponIssueCommand)
@@ -117,9 +145,11 @@ class CouponServiceUnitTest {
         when(couponIssueRepository.getByIdAndUserId(10L, 1L)).thenReturn(null);
 
         CustomException ex = assertThrows(CustomException.class, () ->
-                couponService.restoreCouponUsage(1L, 10L)
+                couponService.restoreCoupon(1L, 10L)
         );
 
-        assertTrue(ex.getMessage().contains("해당 쿠폰을 찾을 수 없습니다."));
+        System.out.println(ex.getMessage());
+
+        assertTrue(ex.getMessage().contains("쿠폰 복구에 실패하였습니다."));
     }
 }
