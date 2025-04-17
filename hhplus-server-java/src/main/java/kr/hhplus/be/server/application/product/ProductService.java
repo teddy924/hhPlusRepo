@@ -1,9 +1,9 @@
 package kr.hhplus.be.server.application.product;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
-import kr.hhplus.be.server.interfaces.product.ProductResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,69 +18,60 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 @RequiredArgsConstructor
 public class ProductService {
 
-    private final ProductSalesService productSalesService;
     private final ProductRepository productRepository;
 
     // 상품 목록 조회
-    public List<ProductResponseDTO> retrieveAll (String category) {
+    public List<ProductResult> retrieveAll (String category) {
+
+        ProductCategoryType parsedCategory = null;
+
+        if (category != null) {
+            // 카테고리 유효성 체크
+            parsedCategory = ProductCategoryType.valueOfIgnoreCase(category)
+                    .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT_CATEGORY));
+        }
 
         List<Product> productList = new ArrayList<>();
 
-        if (category == null || category.isEmpty()) {
-            productList = productRepository.findAll();
+        if (category == null) {
+            productList = productRepository.getAll();
         }
         else {
-            productList = productRepository.findByCategory(category);
+            productList = productRepository.getByCategory(parsedCategory);
         }
 
-        List<ProductResult> resultList = productList.stream().map(ProductResult::from).toList();
-
-        return resultList.stream().map(ProductResponseDTO::from).toList();
+        return productList.stream().map(ProductResult::from).toList();
     }
 
     // 상품 상세 조회
-    public ProductResponseDTO retrieveDetail (Long productId) {
+    public ProductResult retrieveDetail (Long productId) {
 
         Product product = retrieveProduct(productId);
 
-        return ProductResponseDTO.from(ProductResult.from(product));
+        return ProductResult.from(product);
 
     }
 
     public Product retrieveProduct (Long productId) {
 
-        return productRepository.findById(productId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
-
-    }
-
-    // 상위 top5 상품 조회
-    public List<ProductResponseDTO> retrieveTopRank (String category) {
-
-        List<ProductSalesResult> productSalesList = productSalesService.getTopRankProducts(category);
-
-        List<Product> productList = productRepository.findByProductIds(productSalesList);
-
-        List<ProductResult> resultList = productList.stream().map(ProductResult::from).toList();
-
-        return resultList.stream().map(ProductResponseDTO::from).toList();
+        return productRepository.getById(productId);
 
     }
 
     public void decreaseStock(Long productId, int quantity) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
-
-        product.decreaseStock(quantity); // 도메인 로직 위임
-        productRepository.save(product);
+            Product product = productRepository.getById(productId);
+            product.decreaseStock(quantity);
+            productRepository.save(product);
     }
 
     public void restoreStock(Long productId, int quantity) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
-
-        product.increaseStock(quantity); // domain method
-        productRepository.save(product);
+        try {
+            Product product = productRepository.getById(productId);
+            product.increaseStock(quantity);
+            productRepository.save(product);
+        } catch (Exception e) {
+            throw new CustomException(FAIL_RESTORE_STOCK);
+        }
     }
 
     public Map<Product, Long> processOrderProducts(Map<Long, Long> productGrp) {

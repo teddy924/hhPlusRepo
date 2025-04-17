@@ -2,17 +2,19 @@ package kr.hhplus.be.server.domain.order;
 
 import kr.hhplus.be.server.domain.order.entity.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface OrderRepository {
 
-    Optional<Long> saveAndReturnId(Order order);
+    Long saveAndReturnId(Order order);
 
-    Optional<Order> findById(Long id);
+    Order getById(Long id);
 
-    void saveOrder(Order order);
+    void save(Order order);
 
-    List<Order> findAllByUserId(Long userId);
+    List<Order> getAllByUserId(Long userId);
+
+    List<Order> getBySysCretDtBetween(LocalDateTime start, LocalDateTime end);
 
 }

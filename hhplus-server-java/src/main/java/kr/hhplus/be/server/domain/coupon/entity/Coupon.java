@@ -14,7 +14,7 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Getter
 @Entity
-@Table(name = "coupons")
+@Table(name = "coupon")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -43,6 +43,9 @@ public class Coupon {
 
     private LocalDateTime sysChgDt;
 
+    public static Coupon withId(Long id) {
+        return Coupon.builder().id(id).build();
+    }
 
     public boolean isExhausted() {
         return remainQuantity != null && remainQuantity <= 0;

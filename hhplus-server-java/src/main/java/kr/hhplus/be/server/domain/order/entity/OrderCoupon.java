@@ -16,11 +16,19 @@ public class OrderCoupon {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long orderId;
+
+    @OneToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
     private Long couponIssueId;
+
     private Long discountAmount;
+
     private LocalDateTime usedDt;
+
     private LocalDateTime sysCretDt;
+
     private LocalDateTime sysChgDt;
 
 }

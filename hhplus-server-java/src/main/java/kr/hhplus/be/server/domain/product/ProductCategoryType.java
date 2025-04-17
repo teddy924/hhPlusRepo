@@ -1,6 +1,9 @@
 package kr.hhplus.be.server.domain.product;
 
 import lombok.Getter;
+import org.apache.commons.lang3.EnumUtils;
+
+import java.util.Optional;
 
 @Getter
 public enum ProductCategoryType {
@@ -19,4 +22,10 @@ public enum ProductCategoryType {
         this.description = description;
     }
 
+    public static Optional<ProductCategoryType> valueOfIgnoreCase(String category) {
+        if (EnumUtils.isValidEnumIgnoreCase(ProductCategoryType.class, category)) {
+            return Optional.of(ProductCategoryType.valueOf(category.toUpperCase()));
+        }
+        return Optional.empty();
+    }
 }
