@@ -133,3 +133,37 @@ CREATE TABLE coupon_issue (
     issued_dt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     used_dt TIMESTAMP
 );
+
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+
+CREATE UNIQUE INDEX idx_account_user_id ON account(user_id);
+
+CREATE INDEX idx_account_history_account_id ON account_history(account_id);
+CREATE INDEX idx_account_history_sys_cret_dt ON account_history(sys_cret_dt);
+
+CREATE INDEX idx_product_seller_id ON product(seller_id);
+CREATE INDEX idx_product_category ON product(category);
+CREATE INDEX idx_product_efct_st_fns_dt ON product(efct_st_dt, efct_fns_dt);
+
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_orders_sys_cret_dt ON orders(sys_cret_dt);
+
+CREATE INDEX idx_order_item_order_id ON order_item(order_id);
+CREATE INDEX idx_order_item_product_id ON order_item(product_id);
+
+CREATE INDEX idx_order_address_order_id ON order_address(order_id);
+
+CREATE INDEX idx_order_history_order_id ON order_history(order_id);
+CREATE INDEX idx_order_history_status ON order_history(status);
+
+CREATE INDEX idx_order_coupon_order_id ON order_coupon(order_id);
+CREATE INDEX idx_order_coupon_coupon_issue_id ON order_coupon(coupon_issue_id);
+
+CREATE INDEX idx_payment_order_id ON payment(order_id);
+CREATE INDEX idx_payment_status ON payment(payment_status);
+
+CREATE INDEX idx_coupon_issue_user_coupon ON coupon_issue(user_id, coupon_id);
+CREATE INDEX idx_coupon_issue_coupon_id ON coupon_issue(coupon_id);
+CREATE INDEX idx_coupon_issue_user_id ON coupon_issue(user_id);
+
+CREATE INDEX idx_coupon_efct_st_fns_dt ON coupon(efct_st_dt, efct_fns_dt);
