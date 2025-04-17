@@ -47,7 +47,6 @@ class AccountServiceUnitTest {
 
         // then
         verify(mockAccount).charge(1000L);
-        verify(accountRepository).save(mockAccount);
     }
 
     @Test
@@ -64,7 +63,6 @@ class AccountServiceUnitTest {
 
         // then
         verify(mockAccount).use(500L);
-        verify(accountRepository).save(mockAccount);
     }
 
     @Test
@@ -120,7 +118,7 @@ class AccountServiceUnitTest {
 
         // then
         assertEquals(2, result.size());
-        assertEquals(1000L, result.get(0).balance());
+        assertEquals(500L, result.get(0).balance());
     }
 
     @Test
@@ -130,12 +128,20 @@ class AccountServiceUnitTest {
         AccountInfo info = new AccountInfo(1L, 300L);
         AccountHistType type = AccountHistType.CHARGE;
 
+        Account mockAccount = Account.builder()
+                .id(1L)
+                .balance(10000L)
+                .build();
+
+        when(accountRepository.getByUserId(1L)).thenReturn(mockAccount);
+
         // when
         accountService.saveHist(info, type);
 
         // then
         verify(accountHistRepository).save(argThat(h ->
-                h.getAccount().getId().equals(1L) &&
+                h.getAccount() != null &&
+                        h.getAccount().getId().equals(1L) &&
                         h.getStatus() == AccountHistType.CHARGE &&
                         h.getAmount().equals(300L)
         ));

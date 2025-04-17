@@ -82,7 +82,7 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("잔액 변동 이력을 조회할 수 있다")
     void retrieveAccountHist_shouldReturnHistoryList() throws Exception {
-        Long userId = 5L;
+        Long userId = 1L;
 
         List<AccountHistResult> results = accountService.retrieveAccountHist(userId);
 
