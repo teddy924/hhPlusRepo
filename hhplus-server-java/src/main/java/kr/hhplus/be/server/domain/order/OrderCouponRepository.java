@@ -2,12 +2,10 @@ package kr.hhplus.be.server.domain.order;
 
 import kr.hhplus.be.server.domain.order.entity.OrderCoupon;
 
-import java.util.Optional;
-
 public interface OrderCouponRepository {
 
-    Optional<OrderCoupon> findCouponById(Long id);
+    OrderCoupon getByOrderId(Long orderId);
 
-    void saveOrderCoupon(OrderCoupon orderCoupon);
+    void save(OrderCoupon orderCoupon);
 
 }

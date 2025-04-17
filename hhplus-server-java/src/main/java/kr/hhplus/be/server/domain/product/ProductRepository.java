@@ -1,19 +1,16 @@
 package kr.hhplus.be.server.domain.product;
 
-import kr.hhplus.be.server.application.product.ProductSalesResult;
+import jakarta.annotation.Nullable;
 import kr.hhplus.be.server.domain.product.entity.Product;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface ProductRepository {
-    List<Product> findAll();
+    List<Product> getAll();
 
-    List<Product> findByCategory(String category);
+    List<Product> getByCategory(@Nullable ProductCategoryType category);
 
-    Optional<Product> findById(Long id);
-
-    List<Product> findByProductIds(List<ProductSalesResult> productSalesList);
+    Product getById(Long id);
 
     void save(Product product);
 }
