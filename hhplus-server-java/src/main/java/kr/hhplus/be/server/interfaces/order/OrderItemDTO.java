@@ -9,13 +9,13 @@ import lombok.Builder;
 public record OrderItemDTO(
         Long productId,
         Integer quantity,
-        Long totAmount
+        Long totalAmount
 ) {
     public static OrderItemDTO from(OrderItem item) {
         return new OrderItemDTO(
-                item.getProductId(),
+                item.getProduct().getId(),
                 item.getQuantity(),
-                item.getTotAmount()
+                item.getTotalAmount()
         );
     }
 }

@@ -2,6 +2,7 @@ package kr.hhplus.be.server.application.account;
 
 import jakarta.transaction.Transactional;
 import kr.hhplus.be.server.domain.account.AccountHistType;
+import kr.hhplus.be.server.domain.account.AccountInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

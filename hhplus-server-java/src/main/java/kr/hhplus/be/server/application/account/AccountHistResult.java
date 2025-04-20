@@ -14,8 +14,8 @@ public record AccountHistResult(
 
     public static AccountHistResult from (AccountHistory history) {
         return new AccountHistResult(
-                history.getAccountId()
-                , history.getBalance()
+                history.getAccount().getId()
+                , history.getAmount()
                 , history.getStatus()
                 , history.getSysCretDt()
         );

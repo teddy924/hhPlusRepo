@@ -22,8 +22,10 @@ public class CouponResponseDTO {
     private CouponDiscountType discountType;
     private Long discountValue;
     private CouponStatus status;
-    private LocalDateTime issuedAt;
-    private LocalDateTime expiredAt;
+    private LocalDateTime issuedDt;
+    private LocalDateTime usedDt;
+    private LocalDateTime efctStDt;
+    private LocalDateTime efctFnsDt;
 
     public static CouponResponseDTO from(Coupon coupon, CouponIssue couponIssue) {
         return new CouponResponseDTO(
@@ -33,7 +35,9 @@ public class CouponResponseDTO {
                 coupon.getDiscountValue(),
                 couponIssue.getStatus(),
                 couponIssue.getIssuedDt(),
-                couponIssue.getUsedDt()
+                couponIssue.getUsedDt(),
+                coupon.getEfctStDt(),
+                coupon.getEfctFnsDt()
         );
     }
 }

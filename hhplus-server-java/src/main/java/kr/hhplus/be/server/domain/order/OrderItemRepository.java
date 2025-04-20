@@ -7,9 +7,11 @@ import java.util.List;
 
 public interface OrderItemRepository {
 
-    List<OrderItem> findItemByOrderId(Long id);
+    List<OrderItem> getByOrderId(Long orderId);
 
-    void saveOrderItems(List<OrderItem> orderItems);
+    void save(List<OrderItem> orderItems);
 
-    List<OrderItemDTO> findAllByOrderId(Long id);
+    List<OrderItemDTO> getDTOByOrderId(Long orderId);
+
+    List<OrderItem> getByOrderIds(List<Long> orderIds);
 }

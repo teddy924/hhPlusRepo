@@ -46,6 +46,10 @@ dependencies {
 	testImplementation("org.testcontainers:mysql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+	testImplementation("org.testcontainers:testcontainers:1.20.6")
+	testImplementation("org.testcontainers:junit-jupiter:1.20.6")
+	testImplementation("org.testcontainers:mysql:1.20.6")
+
 	// swagger
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
 
