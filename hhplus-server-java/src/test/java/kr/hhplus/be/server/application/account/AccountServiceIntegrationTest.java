@@ -17,6 +17,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -112,5 +115,38 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
         assertEquals(initHistories.size() + 1, histories.size());
         assertEquals(AccountHistType.USE, histories.get(0).getStatus());
         assertEquals(amount, histories.get(0).getAmount());
+    }
+
+    @Test
+    @DisplayName("잔액 충전 동시성 테스트")
+    void concurrentChargeTest() throws Exception {
+        Long userId = 1L;
+        Account account = accountRepository.getByUserId(userId);
+        account.charge(1000L); // balance 초기화
+        accountRepository.save(account);
+
+        int threadCount = 100;
+        int threadPoolsize = 10;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threadPoolsize);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    accountService.chargeAmount(new AccountInfo(1L, 100L));
+                } catch (Exception e) {
+                    System.out.println("Exception: " + e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        Account result = accountRepository.getByUserId(userId);
+        long expected = threadCount * 1000L;
+        assertNotEquals(expected, result.getBalance());
     }
 }

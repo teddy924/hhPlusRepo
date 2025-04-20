@@ -11,8 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -121,5 +126,40 @@ class ProductServiceIntegrationTest extends IntegrationTestBase {
         CustomException ex = assertThrows(CustomException.class, () -> productService.processOrderProducts(orderMap));
         assertTrue(ex.getMessage().contains("해당 상품이 존재하지 않습니다."));
 
+    }
+
+    @Test
+    @DisplayName("재고 차감 동시성 테스트 - 재고 부족 예외 발생 확인")
+    void concurrentStockDecreaseTest_shouldFailWhenStockInsufficient() throws InterruptedException {
+        int threadCount = 10;
+        Long productId = 10L;
+
+        // 먼저 재고를 5로 설정했다고 가정해야 함
+        // 예: 테스트용 DB에 `stock = 5`로 삽입되어 있어야 함
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        List<String> exceptionMessages = Collections.synchronizedList(new ArrayList<>());
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    productService.decreaseStock(productId, 1);
+                } catch (Exception e) {
+                    exceptionMessages.add(e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        long stockErrorCount = exceptionMessages.stream()
+                .filter(msg -> msg.contains("품절") || msg.contains("재고"))
+                .count();
+
+        assertTrue(stockErrorCount >= 1);
     }
 }

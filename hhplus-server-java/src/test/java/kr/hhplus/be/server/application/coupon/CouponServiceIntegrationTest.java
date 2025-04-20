@@ -13,7 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
@@ -99,5 +104,38 @@ class CouponServiceIntegrationTest extends IntegrationTestBase {
     void restoreCoupon_shouldThrow_whenInvalid() {
         CustomException ex = assertThrows(CustomException.class, () -> couponService.restoreCoupon(9999L, 9999L));
         assertTrue(ex.getMessage().contains("쿠폰 복구에 실패하였습니다."));
+    }
+
+    @Test
+    @DisplayName("쿠폰 발급 동시성 테스트 - 중복 발급 예외 발생 확인")
+    void concurrentIssueTest_shouldFailForDuplicateIssue() throws InterruptedException {
+        int threadCount = 10;
+        Long userId = 1L;
+        Long couponId = 4L;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        List<String> exceptionMessages = Collections.synchronizedList(new ArrayList<>());
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    couponService.issueCoupon(new CouponIssueCommand(userId, couponId));
+                } catch (Exception e) {
+                    exceptionMessages.add(e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        long duplicateCount = exceptionMessages.stream()
+                .filter(msg -> msg.contains("이미 발급된 쿠폰입니다") || msg.contains("DUPLICATE_ISSUE_COUPON"))
+                .count();
+
+        assertTrue(duplicateCount >= 1);
     }
 }

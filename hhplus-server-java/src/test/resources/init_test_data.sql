@@ -1,18 +1,18 @@
 INSERT INTO product (id, seller_id, name, price, stock, category, efct_st_dt, efct_fns_dt, sys_cret_dt)
-VALUES (90001, 1, '재고부족상품', 100, 10, 'TENT', NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), NOW());
+VALUES (900001, 1, '재고부족상품', 100, 10, 'TENT', NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), NOW());
 
 INSERT INTO users (id, email, password, name, phone) VALUES
-(80001, 'lowmoney1@test.com', 'pw', '잔액풍족', '01011112222');
+(800001, 'lowmoney1@test.com', 'pw', '잔액풍족', '01011112222');
 INSERT INTO account (id, user_id, balance, sys_cret_dt)
-VALUES (80001,80001, 10000000, NOW());
+VALUES (800001,800001, 10000000, NOW());
 INSERT INTO coupon_issue (id, user_id, coupon_id, status, issued_dt, used_dt)
-VALUES (80001, 80001, 4, 'USED', NOW(), NOW());
+VALUES (800001, 800001, 4, 'USED', NOW(), NOW());
 
 INSERT INTO users (id, email, password, name, phone) VALUES
-(80002, 'lowmoney2@test.com', 'pw', '잔액부족', '01011112222');
+(800002, 'lowmoney2@test.com', 'pw', '잔액부족', '01011112222');
 
 INSERT INTO account (id, user_id, balance, sys_cret_dt)
-VALUES (80002,80002, 0, NOW());
+VALUES (800002,80002, 0, NOW());
 
 -- -- 사용된 쿠폰 발급 이력
 -- INSERT INTO coupon (id, name, discount_type, discount_value, limit_quantity, remain_quantity, efct_st_dt, efct_fns_dt, sys_cret_dt)
