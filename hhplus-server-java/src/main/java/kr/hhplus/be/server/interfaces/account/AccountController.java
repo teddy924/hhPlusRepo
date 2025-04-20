@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.interfaces.account;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.application.account.*;
 import kr.hhplus.be.server.common.ResponseApi;
@@ -30,7 +31,7 @@ public class AccountController {
     })
     @Operation(summary = "잔액 조회", description = "유저 ID로 현재 잔액을 조회한다.")
     public ResponseEntity<ResponseApi<AccountResponseDTO>> retrieve (
-            @RequestParam Long userId
+            @Parameter(description = "유저 ID", required = true) @RequestParam Long userId
     ) throws Exception {
 
         AccountResult result = accountService.retrieveAccount(userId);
@@ -45,7 +46,7 @@ public class AccountController {
     })
     @Operation(summary = "잔액 변동 이력 조회", description = "유저 ID로 잔액 변동 이력을 조회한다.")
     public ResponseEntity<ResponseApi<AccountHistResponseDto>> retrieveHistory (
-            @RequestParam Long userId
+            @Parameter(description = "유저 ID", required = true) @RequestParam Long userId
     ) throws Exception {
 
         List<AccountHistResult> resultList = accountService.retrieveAccountHist(userId);
@@ -54,7 +55,6 @@ public class AccountController {
     }
 
     @PostMapping("/charge")
-    @SwaggerSuccess(responseType = AccountResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_USER
             , INVALID_ACCOUNT_AMOUNT
@@ -72,7 +72,6 @@ public class AccountController {
     }
 
     @PostMapping("/use")
-    @SwaggerSuccess(responseType = AccountResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_USER
             , INVALID_ACCOUNT_AMOUNT

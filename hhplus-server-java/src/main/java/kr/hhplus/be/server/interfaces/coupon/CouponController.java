@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.interfaces.coupon;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.application.coupon.CouponService;
@@ -23,7 +25,7 @@ public class CouponController {
 
     private final CouponService couponService;
 
-    @GetMapping
+    @GetMapping("/list")
     @SwaggerSuccess(responseType = CouponResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_USER
@@ -31,7 +33,7 @@ public class CouponController {
     })
     @Operation(summary = "쿠폰 목록 조회", description = "유저 ID가 보유하고 있는 쿠폰 목록을 조회한다.")
     public ResponseEntity<ResponseApi<List<CouponResponseDTO>>> retrieve(
-            @RequestParam (value = "userId") Long userId
+            @Parameter(description = "유저 ID", required = true) @RequestParam Long userId
     ) {
 
         List<CouponResponseDTO> couponList = couponService.retrieveCouponList(userId);
@@ -41,7 +43,6 @@ public class CouponController {
     }
 
     @PostMapping("/issueCoupon")
-    @SwaggerSuccess(responseType = CouponResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_COUPON
             , INVALID_COUPON

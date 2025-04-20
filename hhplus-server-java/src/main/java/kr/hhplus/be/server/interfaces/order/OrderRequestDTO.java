@@ -7,13 +7,13 @@ import lombok.Builder;
 import java.util.Map;
 
 @Builder
-@Schema(description = "주문-결제 요청 DTO")
+@Schema(description = "주문-결제 Request DTO")
 public record OrderRequestDTO (
         @Schema(description = "유저 ID", example = "1")
         Long userId,
-        @Schema(description = "상품 정보", example = "1020302010203040")
+        @Schema(description = "상품 정보", example = "1000")
         Map<Long, Long> productGrp,
-        @Schema(description = "쿠폰 ID", example = "1230002")
+        @Schema(description = "쿠폰 ID", example = "100")
         Long couponId,
         @Schema(description = "배송 정보")
         OrderAddressDTO orderAddressDTO

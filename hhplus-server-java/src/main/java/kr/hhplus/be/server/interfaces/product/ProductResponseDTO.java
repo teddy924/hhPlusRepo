@@ -6,16 +6,17 @@ import kr.hhplus.be.server.application.product.ProductSalesResult;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import lombok.Builder;
 
-@Schema(description = "상품 응답 DTO")
+@Schema(description = "상품 Response DTO")
 @Builder
-public class ProductResponseDTO {
-    private Long productId;
-    private String productName;
-    private Long sellerId;
-    private ProductCategoryType category;
-    private Long price;
-    private Integer stock;
-    private Integer salesQuantity;
+public record ProductResponseDTO (
+        @Schema(description = "상품 ID") Long productId,
+        @Schema(description = "상품 명") String productName,
+        @Schema(description = "판매자 ID") Long sellerId,
+        @Schema(description = "상품 카테고리") ProductCategoryType category,
+        @Schema(description = "가격") Long price,
+        @Schema(description = "재고량") Integer stock,
+        @Schema(description = "판매수량") Integer salesQuantity
+) {
 
     public static ProductResponseDTO from(ProductResult result) {
         return ProductResponseDTO.builder()

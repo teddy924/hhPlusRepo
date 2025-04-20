@@ -6,10 +6,10 @@ import lombok.Builder;
 
 
 @Builder
-@Schema(description = "쿠폰 발급 요청 DTO")
+@Schema(description = "쿠폰 발급 Request DTO")
 public record CouponIssueRequestDTO (
-        Long userId,
-        Long couponId
+        @Schema(description = "유저 ID") Long userId,
+        @Schema(description = "쿠폰 ID") Long couponId
 ) {
     public CouponIssueCommand toCommand() {
         return new CouponIssueCommand(userId, couponId);

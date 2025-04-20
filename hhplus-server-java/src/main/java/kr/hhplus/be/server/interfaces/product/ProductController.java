@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.interfaces.product;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.application.product.ProductFacade;
 import kr.hhplus.be.server.application.product.ProductResult;
@@ -29,11 +30,11 @@ public class ProductController {
     @GetMapping
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
     @SwaggerError({
-
+            NOT_EXIST_PRODUCT_CATEGORY
     })
     @Operation(summary = "상품 목록 조회", description = "상품 목록을 조회한다. - 카테고리 별 조회 가능")
     public ResponseEntity<ResponseApi<List<ProductResponseDTO>>> retrieve (
-            @RequestParam(value = "category", required = false) String category
+            @Parameter(description = "상품 카테고리") @RequestParam(required = false) String category
     ) {
 
         List<ProductResult> resultList = productService.retrieveAll(category);
@@ -49,7 +50,7 @@ public class ProductController {
     })
     @Operation(summary = "상품 상세 조회", description = "상품 상세 정보를 조회한다.")
     public ResponseEntity<ResponseApi<ProductResponseDTO>> retrieve (
-            @RequestParam Long productId
+            @Parameter(description = "상품 ID", required = true) @RequestParam Long productId
     ) {
 
         ProductResult result = productService.retrieveDetail(productId);
@@ -58,17 +59,17 @@ public class ProductController {
 
     }
 
-    @GetMapping("/top")
+    @GetMapping("/rank")
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
     @SwaggerError({
 
     })
     @Operation(summary = "상위 상품 목록 조회", description = "상위 상품 목록을 조회한다. - 카테고리 별 조회 가능")
-    public ResponseEntity<ResponseApi<List<ProductResponseDTO>>> retrieveTop(
-            @RequestParam(value = "category", required = false) String category
+    public ResponseEntity<ResponseApi<List<ProductResponseDTO>>> retrieveRank(
+            @Parameter(description = "상품 카테고리") @RequestParam(required = false) String category
     ) {
 
-        List<ProductSalesResult> resultList = productFacade.retrieveTopProducts(category);
+        List<ProductSalesResult> resultList = productFacade.retrieveRank(category);
 
         return ResponseEntity.ok(new ResponseApi<>(true, "상위 상품 목록 조회 성공", resultList.stream().map(ProductResponseDTO::from).toList()));
 

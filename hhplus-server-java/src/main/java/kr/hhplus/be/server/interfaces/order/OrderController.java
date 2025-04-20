@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.interfaces.order;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.application.order.OrderCancelCommand;
 import kr.hhplus.be.server.application.order.OrderCommand;
@@ -28,7 +29,6 @@ public class OrderController {
     public final OrderService orderService;
 
     @PostMapping("/order")
-    @SwaggerSuccess(responseType = OrderResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_USER
             , NOT_HAS_COUPON
@@ -49,7 +49,6 @@ public class OrderController {
     }
 
     @PostMapping("/cancel")
-    @SwaggerSuccess(responseType = OrderResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_ORDER
     })
@@ -66,14 +65,14 @@ public class OrderController {
 
     }
 
-    @GetMapping("/orders/search")
+    @GetMapping("/retrieve")
     @SwaggerSuccess(responseType = OrderResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_ORDER
     })
     @Operation(summary = "주문 목록 조회", description = "주문 목록을 조회한다.")
     public ResponseEntity<ResponseApi<List<OrderResponseDTO>>> retrieve(
-            @RequestParam (value = "userId") Long userId
+            @Parameter(description = "유저 ID", required = true) @RequestParam Long userId
     ) {
 
         List<OrderResponseDTO> orders = orderService.retrieveOrdersByUserId(userId);
@@ -81,14 +80,14 @@ public class OrderController {
         return ResponseEntity.ok(new ResponseApi<>(true, "유저 주문 목록 조회 성공", orders));
     }
 
-    @GetMapping("/orders/detail")
-    @SwaggerSuccess(responseType = OrderResponseDTO.class)
+    @GetMapping("/retrieve/detail")
+    @SwaggerSuccess(responseType = OrderDetailResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_ORDER
     })
     @Operation(summary = "주문 상세 조회", description = "주문 상세 정보를 조회한다.")
     public ResponseEntity<ResponseApi<OrderDetailResponseDTO>> retrieveDetail(
-            @RequestParam (value = "orderId") Long orderId
+            @Parameter(description = "주문 ID", required = true) @RequestParam Long orderId
     ) {
         OrderDetailResponseDTO detail = orderFacade.retrieveOrderDetail(orderId);
         return ResponseEntity.ok(new ResponseApi<>(true, "주문 상세 조회 성공", detail));

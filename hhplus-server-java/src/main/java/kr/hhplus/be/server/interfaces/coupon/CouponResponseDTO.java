@@ -5,27 +5,23 @@ import kr.hhplus.be.server.domain.coupon.CouponDiscountType;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "쿠폰 조회 응답 DTO")
-public class CouponResponseDTO {
-
-    private Long couponId;
-    private String couponName;
-    private CouponDiscountType discountType;
-    private Long discountValue;
-    private CouponStatus status;
-    private LocalDateTime issuedDt;
-    private LocalDateTime usedDt;
-    private LocalDateTime efctStDt;
-    private LocalDateTime efctFnsDt;
+@Builder
+@Schema(description = "쿠폰 조회 Response DTO")
+public record CouponResponseDTO (
+        @Schema(description = "쿠폰 ID") Long couponId,
+        @Schema(description = "쿠폰 명") String couponName,
+        @Schema(description = "할인유형") CouponDiscountType discountType,
+        @Schema(description = "할인금액") Long discountValue,
+        @Schema(description = "쿠폰 상태") CouponStatus status,
+        @Schema(description = "발급일자") LocalDateTime issuedDt,
+        @Schema(description = "사용일자") LocalDateTime usedDt,
+        @Schema(description = "시작일자") LocalDateTime efctStDt,
+        @Schema(description = "종료일자") LocalDateTime efctFnsDt
+) {
 
     public static CouponResponseDTO from(Coupon coupon, CouponIssue couponIssue) {
         return new CouponResponseDTO(

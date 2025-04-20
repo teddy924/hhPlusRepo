@@ -8,12 +8,12 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 
 @Builder
-@Schema(description = "주문 결제 응답 DTO")
+@Schema(description = "주문 결제 Response DTO")
 public record OrderResponseDTO(
-        Long orderId,
-        Long totalAmount,
-        OrderStatus orderStatus,
-        LocalDateTime orderedAt
+        @Schema(description = "주문 ID") Long orderId,
+        @Schema(description = "주문 금액") Long totalAmount,
+        @Schema(description = "주문 상태") OrderStatus orderStatus,
+        @Schema(description = "주문 일자") LocalDateTime orderedDt
 ) {
     public static OrderResponseDTO from(Order order) {
         return new OrderResponseDTO(
