@@ -37,4 +37,10 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepository {
         return jpaCouponIssueRepository.findByIdAndUserId(couponIssueId, userId)
                 .orElseThrow(() -> new CustomException(NOT_HAS_COUPON));
     }
+
+    @Override
+    public Long countByCouponId(Long couponId) {
+        return jpaCouponIssueRepository.countByCouponId(couponId)
+                .orElseThrow(() -> new CustomException(NOT_EXIST_COUPON));
+    }
 }

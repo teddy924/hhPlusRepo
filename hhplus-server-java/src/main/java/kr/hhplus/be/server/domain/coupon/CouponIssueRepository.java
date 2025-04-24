@@ -13,4 +13,6 @@ public interface CouponIssueRepository {
     CouponIssue getByUserIdAndCouponId(Long userId, Long couponId);
 
     CouponIssue getByIdAndUserId(Long couponIssueId, Long userId);
+
+    Long countByCouponId(Long couponId);
 }
