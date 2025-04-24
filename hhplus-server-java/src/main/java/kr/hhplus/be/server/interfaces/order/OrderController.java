@@ -19,7 +19,7 @@ import java.util.List;
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @RestController
-@RequestMapping("/order")
+@RequestMapping("/api/order")
 @Tag(name = "주문 API", description = "주문 관련 API")
 @RequiredArgsConstructor
 public class OrderController {

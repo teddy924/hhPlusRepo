@@ -42,7 +42,7 @@ public class ProductController {
 
     }
 
-    @GetMapping("/detail")
+    @GetMapping("/api/detail")
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_PRODUCT
@@ -68,7 +68,7 @@ public class ProductController {
             @RequestParam(value = "category", required = false) String category
     ) {
 
-        List<ProductSalesResult> resultList = productFacade.retrieveTopProducts(category);
+        List<ProductSalesResult> resultList = productFacade.retrieveRankSnapshot(category);
 
         return ResponseEntity.ok(new ResponseApi<>(true, "상위 상품 목록 조회 성공", resultList.stream().map(ProductResponseDTO::from).toList()));
 

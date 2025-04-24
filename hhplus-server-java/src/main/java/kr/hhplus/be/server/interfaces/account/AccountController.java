@@ -15,7 +15,7 @@ import java.util.List;
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @RestController
-@RequestMapping("/account")
+@RequestMapping("/api/account")
 @Tag(name = "잔액 API", description = "잔액 관련 API")
 @RequiredArgsConstructor
 public class AccountController {
