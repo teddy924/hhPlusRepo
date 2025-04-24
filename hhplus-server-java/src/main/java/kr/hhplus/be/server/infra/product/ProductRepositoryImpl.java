@@ -32,12 +32,18 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Product getById(Long productId) {
-        return jpaProductRepository.findById(productId)
+        return jpaProductRepository.findByIdWithLock(productId)
                 .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
     }
 
     @Override
     public void save(Product product) {
         jpaProductRepository.save(product);
+    }
+
+    @Override
+    public Product findById(Long productId) {
+        return jpaProductRepository.findById(productId)
+                .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT));
     }
 }

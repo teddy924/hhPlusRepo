@@ -13,4 +13,6 @@ public interface ProductRepository {
     Product getById(Long id);
 
     void save(Product product);
+
+    Product findById(Long id);
 }

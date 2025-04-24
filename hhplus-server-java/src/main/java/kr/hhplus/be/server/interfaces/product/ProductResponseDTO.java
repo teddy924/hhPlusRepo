@@ -33,7 +33,7 @@ public class ProductResponseDTO {
                 .productId(result.productId())
                 .productName(result.productName())
                 .sellerId(result.sellerId())
-                .category(result.category())
+                .category(ProductCategoryType.valueOf(result.category()))
                 .price(result.price())
                 .stock(result.stock())
                 .salesQuantity(result.salesQuantity())

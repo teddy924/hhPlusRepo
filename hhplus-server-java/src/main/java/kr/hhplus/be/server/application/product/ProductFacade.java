@@ -6,11 +6,15 @@ import kr.hhplus.be.server.domain.order.OrderRepository;
 import kr.hhplus.be.server.domain.order.entity.Order;
 import kr.hhplus.be.server.domain.order.entity.OrderItem;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
+import kr.hhplus.be.server.domain.product.ProductRankSnapshotRepository;
 import kr.hhplus.be.server.domain.product.ProductRankingPolicy;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import kr.hhplus.be.server.domain.product.entity.ProductRankSnapshot;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,21 +25,23 @@ import java.util.stream.Collectors;
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 import static kr.hhplus.be.server.domain.product.ProductRankingPolicy.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductFacade {
 
     private final ProductRankingPolicy productRankingPolicy;
     private final ProductRepository productRepository;
+    private final ProductRankSnapshotRepository productRankSnapshotRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
-    public List<ProductSalesResult> retrieveTopProducts(String category) {
+    @Transactional(readOnly = true)     // 여러 테이블을 순차적으로 조회하기 때문에 과정 도중 데이터 변경이 발생할 가능성이 있음
+    public List<ProductSalesResult> retrieveRank(String category) {
 
         ProductCategoryType parsedCategory = null;
 
-        if (category != null) {
-            // 카테고리 유효성 체크
+        if (category != null && !"ALL".equals(category)) {
             parsedCategory = ProductCategoryType.valueOfIgnoreCase(category)
                     .orElseThrow(() -> new CustomException(NOT_EXIST_PRODUCT_CATEGORY));
         }
@@ -67,9 +73,33 @@ public class ProductFacade {
                 .map(entry -> {
                     Product product = productMap.get(entry.getKey());
                     int salesQuantity = entry.getValue();
-                    return ProductSalesResult.from(product, salesQuantity);
+                    return ProductSalesResult.from(product, salesQuantity, category);
                 })
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<ProductSalesResult> retrieveRankSnapshot(String category) {
+        log.debug("retrieveRankSnapshot category: {}", category);
+
+        String categoryKey = (category == null) ? "ALL" : category.toUpperCase();
+
+        log.debug("categoryKey: {}", categoryKey);
+
+        LocalDateTime lastSnapshot = productRankSnapshotRepository.getLatestSnapshotAt(categoryKey);
+
+        log.debug("last snapshot: {}", lastSnapshot);
+
+        List<ProductRankSnapshot> snapshots = productRankSnapshotRepository.getByCategoryAndSnapshotAtOrderByRankingAsc(categoryKey, lastSnapshot);
+
+        for (ProductRankSnapshot snapshot : snapshots) {
+            log.debug("snapshot productId {}", snapshot.getProductId());
+        }
+
+        return snapshots.stream()
+                .map(ProductSalesResult::from)
+                .toList();
+    }
+
 
 }

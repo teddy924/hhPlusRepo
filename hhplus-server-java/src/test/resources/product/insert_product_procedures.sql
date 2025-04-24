@@ -8,7 +8,7 @@ BEGIN
         VALUES (
             FLOOR(1 + RAND() * 10),
             CONCAT('Product_', i),
-            10000 + (i * 10),
+            10000 + (i * 100),
             1000,
             ELT(
                 CASE

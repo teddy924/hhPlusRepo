@@ -5,6 +5,7 @@ import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -66,6 +68,7 @@ public class ProductService {
 
     public void restoreStock(Long productId, int quantity) {
         try {
+            log.debug("restoring stock for product {}", productId);
             Product product = productRepository.getById(productId);
             product.increaseStock(quantity);
             productRepository.save(product);
