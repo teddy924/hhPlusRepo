@@ -55,7 +55,7 @@ class OrderServiceIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("사용자 ID로 주문 목록을 조회할 수 있어야 한다")
     void retrieveOrdersByUserId_shouldReturnOrderList() {
-        List<OrderResponseDTO> orders = orderService.retrieveOrdersByUserId(1L);
+        List<OrderResponseDTO> orders = orderService.retrieveOrdersByUserId(10L);
 
         assertFalse(orders.isEmpty());
     }

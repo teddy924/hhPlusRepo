@@ -1,6 +1,5 @@
 package kr.hhplus.be.server.application.payment;
 
-import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.order.entity.Order;
 import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.domain.payment.PaymentMethod;
@@ -71,23 +70,10 @@ class PaymentServiceUnitTest {
 
         when(paymentRepository.findByOrderId(order.getId())).thenReturn(Optional.of(payment));
 
-        Payment result = paymentService.retrieveByOrderId(order.getId());
+        Payment result = paymentService.retrieve(order.getId()).orElse(null);
 
         assertEquals(20000L, result.getAmount());
         assertEquals(100L, result.getOrder().getId());
     }
 
-    @Test
-    @DisplayName("주문 ID로 결제 조회 시 존재하지 않으면 예외 발생")
-    void retrieveByOrderId_shouldThrow_whenNotFound() {
-        // given
-        when(paymentRepository.findByOrderId(999L)).thenReturn(Optional.empty());
-
-        // when
-        CustomException ex = assertThrows(CustomException.class, () ->
-                paymentService.retrieveByOrderId(999L));
-
-        // then
-        assertTrue(ex.getMessage().contains("해당 결제 정보를 찾을 수 없습니다."));
-    }
 }

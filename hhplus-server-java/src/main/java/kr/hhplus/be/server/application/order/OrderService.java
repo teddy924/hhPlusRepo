@@ -7,6 +7,7 @@ import kr.hhplus.be.server.domain.product.entity.Product;
 import kr.hhplus.be.server.domain.user.entity.User;
 import kr.hhplus.be.server.interfaces.order.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -122,7 +124,6 @@ public class OrderService {
     }
 
     public OrderSaveInfo retrieveOrderInfo(Long orderId) {
-
         return OrderSaveInfo.builder()
                 .order(orderRepository.getById(orderId))
                 .orderAddress(orderAddressRepository.getByOrderId(orderId))

@@ -1,17 +1,14 @@
 package kr.hhplus.be.server.application.payment;
 
-import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.order.entity.Order;
 import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.domain.payment.PaymentRepository;
-import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import kr.hhplus.be.server.domain.payment.entity.Payment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-
-import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +18,11 @@ public class PaymentService {
 
     public void save (Order order, PaymentInfo paymentInfo) {
 
-        Payment payment = new Payment();
+        Payment payment = retrieve(order.getId()).orElse(null);
 
-        if (paymentInfo.status() == PaymentStatus.COMPLETED) {
+        if (payment == null) {
             payment = Payment.builder()
+                    .id(null)
                     .order(order)
                     .amount(paymentInfo.amount())
                     .paymentMethod(paymentInfo.method())
@@ -32,9 +30,12 @@ public class PaymentService {
                     .paidDt(paymentInfo.paidAt())
                     .sysCretDt(LocalDateTime.now())
                     .build();
-        } else if (paymentInfo.status() == PaymentStatus.CANCELLED) {
+        } else {
             payment = Payment.builder()
+                    .id(payment.getId())
                     .order(order)
+                    .amount(paymentInfo.amount())
+                    .paymentMethod(paymentInfo.method())
                     .paymentStatus(paymentInfo.status())
                     .sysChgDt(LocalDateTime.now())
                     .build();
@@ -44,9 +45,8 @@ public class PaymentService {
 
     }
 
-    public Payment retrieveByOrderId(Long orderId) {
-        return paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new CustomException(NOT_EXIST_PAYMENT));
+    public Optional<Payment> retrieve(Long orderId) {
+        return paymentRepository.findByOrderId(orderId);
     }
 
 }
