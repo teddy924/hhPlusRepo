@@ -1,33 +1,70 @@
 package kr.hhplus.be.server.application.account;
 
-import jakarta.transaction.Transactional;
-import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountFacade {
 
     private final AccountService accountService;
+    private final AccountProperties accountProperties;
 
-    @Transactional
     public void charge(AccountCommand command) throws Exception {
 
         AccountInfo info = command.toInfo();
 
         accountService.chargeAmount(info);
-        accountService.saveHist(info, AccountHistType.CHARGE);
+
+//        int retryCnt = 0;
+//
+//        while(true) {
+//            try {
+//                accountService.chargeAmount(info);
+//                break;
+//            } catch (OptimisticLockException e) {
+//                if (++retryCnt > accountProperties.maxRetry()) {
+//                    throw new CustomException(FAIL_CHARGE_AMOUNT);
+//                }
+//                try {
+//                    Thread.sleep(accountProperties.retryWaitMs());
+//                } catch (InterruptedException e1) {
+//                    Thread.currentThread().interrupt();
+//                    log.warn(e1.getMessage());
+//                }
+//            }
+//        }
+
     }
 
-    @Transactional
     public void use(AccountCommand command) throws Exception {
 
         AccountInfo info = command.toInfo();
 
         accountService.useAmount(info);
-        accountService.saveHist(info, AccountHistType.USE);
+
+//        int retryCnt = 0;
+//
+//        while(true) {
+//            try {
+//                accountService.useAmount(info);
+//                break;
+//            } catch (OptimisticLockException e) {
+//                if (++retryCnt > accountProperties.maxRetry()) {
+//                    throw new CustomException(FAIL_CHARGE_AMOUNT);
+//                }
+//                try {
+//                    Thread.sleep(accountProperties.retryWaitMs());
+//                } catch (InterruptedException e1) {
+//                    Thread.currentThread().interrupt();
+//                    log.warn(e1.getMessage());
+//                }
+//            }
+//        }
+
     }
 
 }

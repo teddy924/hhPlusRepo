@@ -11,6 +11,7 @@ import kr.hhplus.be.server.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -38,24 +39,25 @@ class AccountServiceUnitTest {
     @DisplayName("잔액 충전 시 계좌에서 charge 호출 후 저장되어야 한다")
     void chargeAmount_shouldIncreaseBalanceAndSave() throws Exception {
         // given
-        AccountInfo info = new AccountInfo(1L, 1000L);
+        AccountInfo info = new AccountInfo(21L, 1000L);
         Account mockAccount = mock(Account.class);
-        when(accountRepository.getByUserId(1L)).thenReturn(mockAccount);
+        when(accountRepository.getByUserId(21L)).thenReturn(mockAccount);
 
         // when
         accountService.chargeAmount(info);
 
         // then
         verify(mockAccount).charge(1000L);
+        verify(accountRepository).save(mockAccount);
     }
 
     @Test
     @DisplayName("잔액 사용 시 사용 가능 금액이면 use 호출 후 저장되어야 한다")
     void useAmount_shouldUseBalanceAndSave() throws Exception {
         // given
-        AccountInfo info = new AccountInfo(1L, 500L);
+        AccountInfo info = new AccountInfo(21L, 500L);
         Account mockAccount = mock(Account.class);
-        when(accountRepository.getByUserId(1L)).thenReturn(mockAccount);
+        when(accountRepository.getByUserId(21L)).thenReturn(mockAccount);
         when(mockAccount.canUse(500L)).thenReturn(true);
 
         // when
@@ -63,24 +65,31 @@ class AccountServiceUnitTest {
 
         // then
         verify(mockAccount).use(500L);
+        verify(accountRepository).save(mockAccount);
     }
 
     @Test
     @DisplayName("잔액 조회 시 해당 유저의 잔액이 반환되어야 한다")
     void retrieveAccount_shouldReturnAccount() throws Exception {
         User user = User.builder()
-                .id(1L)
+                .id(21L)
                 .name("홍길동")
                 .email("test@hhplus.kr")
                 .build();
-        Account account = new Account(1L, user, 5000L, LocalDateTime.now(), LocalDateTime.now());
-        when(accountRepository.getByUserId(1L)).thenReturn(account);
+        Account account = Account.builder()
+                .id(21L)
+                .user(user)
+                .balance(5000L)
+                .sysCretDt(LocalDateTime.now())
+                .build();
+
+        when(accountRepository.getByUserId(21L)).thenReturn(account);
 
         // when
-        AccountResult result = accountService.retrieveAccount(1L);
+        AccountResult result = accountService.retrieveAccount(21L);
 
         // then
-        assertEquals(1L, result.userId());
+        assertEquals(21L, result.userId());
         assertEquals(5000L, result.balance());
     }
 
@@ -89,32 +98,36 @@ class AccountServiceUnitTest {
     void retrieveAccountHist_shouldReturnHistoryList() throws Exception {
         // given
         User user = User.builder()
-                .id(3L)
+                .id(21L)
                 .name("홍길동")
                 .email("test@hhplus.kr")
                 .build();
-        Account account = new Account(1L, user, 1000L, LocalDateTime.now(), LocalDateTime.now());
+        Account account = Account.builder()
+                .id(21L)
+                .user(user)
+                .balance(1000L)
+                .sysCretDt(LocalDateTime.now())
+                .build();
         AccountHistory history1 = AccountHistory.builder()
-                .id(1L)
+                .id(21L)
                 .account(account)
                 .status(AccountHistType.CHARGE)
                 .amount(1000L)
-                .sysCretDt(LocalDateTime.now())
+                .sysCretDt(LocalDateTime.now().minusHours(1L))
                 .build();
-
         AccountHistory history2 = AccountHistory.builder()
-                .id(2L)
+                .id(22L)
                 .account(account)
                 .status(AccountHistType.USE)
                 .amount(500L)
                 .sysCretDt(LocalDateTime.now())
                 .build();
 
-        when(accountRepository.getByUserId(3L)).thenReturn(account);
-        when(accountHistRepository.getAllByAccountId(1L)).thenReturn(List.of(history1, history2));
+        when(accountRepository.getByUserId(21L)).thenReturn(account);
+        when(accountHistRepository.getAllByAccountId(21L)).thenReturn(List.of(history1, history2));
 
         // when
-        List<AccountHistResult> result = accountService.retrieveAccountHist(3L);
+        List<AccountHistResult> result = accountService.retrieveAccountHist(21L);
 
         // then
         assertEquals(2, result.size());
@@ -125,34 +138,41 @@ class AccountServiceUnitTest {
     @DisplayName("히스토리 저장 시 입력값 기준으로 AccountHistory가 저장되어야 한다")
     void saveHist_shouldCallSaveWithCorrectData() {
         // given
-        AccountInfo info = new AccountInfo(1L, 300L);
+        User user = User.builder()
+                .id(21L)
+                .name("홍길동")
+                .email("test@hhplus.kr")
+                .build();
+        Account account = Account.builder()
+                .id(21L)
+                .user(user)
+                .balance(1000L)
+                .sysCretDt(LocalDateTime.now())
+                .build();
+        AccountInfo info = new AccountInfo(21L, 300L);
         AccountHistType type = AccountHistType.CHARGE;
 
-        Account mockAccount = Account.builder()
-                .id(1L)
-                .balance(10000L)
-                .build();
-
-        when(accountRepository.getByUserId(1L)).thenReturn(mockAccount);
+        when(accountRepository.getByUserId(21L)).thenReturn(account);
 
         // when
         accountService.saveHist(info, type);
 
         // then
-        verify(accountHistRepository).save(argThat(h ->
-                h.getAccount() != null &&
-                        h.getAccount().getId().equals(1L) &&
-                        h.getStatus() == AccountHistType.CHARGE &&
-                        h.getAmount().equals(300L)
-        ));
+        ArgumentCaptor<AccountHistory> captor = ArgumentCaptor.forClass(AccountHistory.class);
+        verify(accountHistRepository).save(captor.capture());
+
+        AccountHistory saved = captor.getValue();
+        assertEquals(21L, saved.getAccount().getId());
+        assertEquals(AccountHistType.CHARGE, saved.getStatus());
+        assertEquals(300L, saved.getAmount());
     }
 
     @Test
     @DisplayName("잔액 충전 시 존재하지 않는 계좌일 경우 예외가 발생해야 한다")
     void chargeAmount_shouldThrowException_whenAccountNotFound() {
         // given
-        AccountInfo info = new AccountInfo(999L, 1000L);
-        when(accountRepository.getByUserId(999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        AccountInfo info = new AccountInfo(999999L, 1000L);
+        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.chargeAmount(info));
@@ -163,8 +183,8 @@ class AccountServiceUnitTest {
     @DisplayName("잔액 사용 시 존재하지 않는 계좌일 경우 예외가 발생해야 한다")
     void useAmount_shouldThrowException_whenAccountNotFound() {
         // given
-        AccountInfo info = new AccountInfo(999L, 500L);
-        when(accountRepository.getByUserId(999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        AccountInfo info = new AccountInfo(999999L, 500L);
+        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.useAmount(info));
@@ -175,10 +195,10 @@ class AccountServiceUnitTest {
     @DisplayName("잔액 조회 시 존재하지 않는 계좌일 경우 예외가 발생해야 한다")
     void retrieveAccount_shouldThrowException_whenAccountNotFound() {
         // given
-        when(accountRepository.getByUserId(999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
-        CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccount(999L));
+        CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccount(999999L));
         assertTrue(ex.getMessage().contains("계좌가 존재하지 않습니다."));
     }
 
@@ -186,10 +206,10 @@ class AccountServiceUnitTest {
     @DisplayName("잔액 이력 조회 시 존재하지 않는 계좌일 경우 예외가 발생해야 한다")
     void retrieveAccountHist_shouldThrowException_whenAccountNotFound() {
         // given
-        when(accountRepository.getByUserId(999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
-        CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccountHist(999L));
+        CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccountHist(999999L));
         assertTrue(ex.getMessage().contains("계좌가 존재하지 않습니다."));
     }
 }

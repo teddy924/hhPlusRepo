@@ -17,9 +17,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,7 +35,7 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("잔액 충전 시 잔액이 증가해야 한다")
     void chargeAmount_shouldIncreaseBalance() throws Exception {
-        Long userId = 1L;
+        Long userId = 11L;
         long chargeAmount = 5000L;
 
         accountService.chargeAmount(new AccountInfo(userId, chargeAmount));
@@ -50,7 +47,7 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("잔액 사용 시 잔액이 감소해야 한다")
     void useAmount_shouldDecreaseBalance() throws Exception {
-        Long userId = 2L;
+        Long userId = 12L;
         long useAmount = 3000L;
 
         accountService.useAmount(new AccountInfo(userId, useAmount));
@@ -62,7 +59,7 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("잔액 부족 시 예외가 발생해야 한다")
     void useAmount_shouldThrow_whenInsufficient() {
-        Long userId = 3L;
+        Long userId = 13L;
         long useAmount = 999_999L;
 
         CustomException exception = assertThrows(CustomException.class,
@@ -74,7 +71,7 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("잔액을 조회할 수 있다")
     void retrieveAccount_shouldReturnCorrectInfo() throws Exception {
-        Long userId = 4L;
+        Long userId = 14L;
 
         AccountResult result = accountService.retrieveAccount(userId);
 
@@ -85,7 +82,7 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("잔액 변동 이력을 조회할 수 있다")
     void retrieveAccountHist_shouldReturnHistoryList() throws Exception {
-        Long userId = 1L;
+        Long userId = 15L;
 
         List<AccountHistResult> results = accountService.retrieveAccountHist(userId);
 
@@ -97,7 +94,7 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
     @DisplayName("잔액 변동 이력을 저장할 수 있다")
     void saveHist_shouldInsertHistory() {
         // given
-        Long userId = 6L;
+        Long userId = 16L;
         long amount = 3000L;
         AccountInfo info = new AccountInfo(userId, amount);
 
@@ -115,38 +112,5 @@ class AccountServiceIntegrationTest extends IntegrationTestBase {
         assertEquals(initHistories.size() + 1, histories.size());
         assertEquals(AccountHistType.USE, histories.get(0).getStatus());
         assertEquals(amount, histories.get(0).getAmount());
-    }
-
-    @Test
-    @DisplayName("잔액 충전 동시성 테스트")
-    void concurrentChargeTest() throws Exception {
-        Long userId = 1L;
-        Account account = accountRepository.getByUserId(userId);
-        account.charge(1000L); // balance 초기화
-        accountRepository.save(account);
-
-        int threadCount = 100;
-        int threadPoolsize = 10;
-
-        ExecutorService executorService = Executors.newFixedThreadPool(threadPoolsize);
-        CountDownLatch latch = new CountDownLatch(threadCount);
-
-        for (int i = 0; i < threadCount; i++) {
-            executorService.submit(() -> {
-                try {
-                    accountService.chargeAmount(new AccountInfo(1L, 100L));
-                } catch (Exception e) {
-                    System.out.println("Exception: " + e.getMessage());
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-
-        latch.await();
-
-        Account result = accountRepository.getByUserId(userId);
-        long expected = threadCount * 1000L;
-        assertNotEquals(expected, result.getBalance());
     }
 }

@@ -7,12 +7,15 @@ import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountService {
@@ -21,15 +24,21 @@ public class AccountService {
     private final AccountHistRepository accountHistRepository;
 
     // 잔액 충전
+    @Transactional
     public void chargeAmount (AccountInfo info) throws Exception {
 
         Account account = accountRepository.getByUserId(info.userId());
 
         account.charge(info.amount());
 
+        accountRepository.save(account);
+
+        saveHist(info, AccountHistType.CHARGE);
+
     }
 
     // 잔액 사용
+    @Transactional
     public void useAmount (AccountInfo info) throws Exception {
 
         Account account = accountRepository.getByUserId(info.userId());
@@ -38,9 +47,14 @@ public class AccountService {
             account.use(info.amount());
         }
 
+        accountRepository.save(account);
+
+        saveHist(info, AccountHistType.USE);
+
     }
 
     // 잔액 조회
+    @Transactional
     public AccountResult retrieveAccount(Long userId) throws Exception {
 
         Account account = accountRepository.getByUserId(userId);
@@ -50,6 +64,7 @@ public class AccountService {
     }
 
     // 잔액 변동 이력 조회
+    @Transactional
     public List<AccountHistResult> retrieveAccountHist(Long userId) throws Exception {
 
         Account account = accountRepository.getByUserId(userId);
@@ -67,6 +82,7 @@ public class AccountService {
     }
 
     // 잔액 변동 이력 저장
+    @Transactional
     public void saveHist(AccountInfo info, AccountHistType histType) {
 
         Account account = accountRepository.getByUserId(info.userId());
