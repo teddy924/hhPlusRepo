@@ -9,4 +9,5 @@ public interface AccountRepository {
 
     void save(Account account);
 
+    Account findByUserId(Long userId);
 }

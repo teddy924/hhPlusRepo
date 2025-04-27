@@ -5,7 +5,9 @@ import kr.hhplus.be.server.IntegrationTestBase;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
+import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
+import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,12 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.LongStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
@@ -28,6 +29,8 @@ class CouponServiceIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private CouponService couponService;
+    @Autowired
+    private CouponIssueRepository couponIssueRepository;
 
     @Test
     @DisplayName("쿠폰 목록 조회 - 보유한 쿠폰이 있을 경우 정상 조회")
@@ -107,23 +110,58 @@ class CouponServiceIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("쿠폰 발급 동시성 테스트 - 중복 발급 예외 발생 확인")
-    void concurrentIssueTest_shouldFailForDuplicateIssue() throws InterruptedException {
+    @DisplayName("쿠폰 동시 발급 테스트 - 중복 발급이 실제로 발생하는지 확인")
+    void concurrentCouponIssue_asIs_shouldCauseDuplicateIssue() throws InterruptedException {
         int threadCount = 10;
-        Long userId = 1L;
+        Long userId = 5L;
         Long couponId = 4L;
 
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        // 동시 요청을 위한 쓰레드풀 + 래치
+        ExecutorService executorService = Executors.newFixedThreadPool(5);
         CountDownLatch latch = new CountDownLatch(threadCount);
-
-        List<String> exceptionMessages = Collections.synchronizedList(new ArrayList<>());
 
         for (int i = 0; i < threadCount; i++) {
             executorService.submit(() -> {
                 try {
                     couponService.issueCoupon(new CouponIssueCommand(userId, couponId));
                 } catch (Exception e) {
-                    exceptionMessages.add(e.getMessage());
+                    // 예외 무시 — 지금은 DB 결과로 판단할 것이기 때문에
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();  // 모든 쓰레드 종료 대기
+
+        // DB에서 발급된 쿠폰 이력 조회
+        List<CouponIssue> issuedList = couponIssueRepository.getAllByUserId(userId);
+        long issuedCount = issuedList.stream()
+                .filter(issue -> issue.getCoupon().getId().equals(couponId))
+                .count();
+
+        System.out.println("실제 발급된 쿠폰 수: " + issuedCount);
+
+        // 기대: 실제 발급된 쿠폰 수 : 1
+        assertTrue(issuedCount == 1, "동시성 이슈가 발생하여 중복 발급이 됐는지 확인");
+    }
+
+    @Test
+    @DisplayName("동시 발급 - 쿠폰 재고 초과 발급 동시성 이슈 확인")
+    void concurrentIssueExceedingStock_shouldCauseOverIssuance() throws InterruptedException {
+        int threadCount = 100;
+        Long couponId = 700001L; // 재고 5개 설정된 쿠폰
+        List<Long> userIds = LongStream.range(1000, 1000 + threadCount).boxed().toList();
+
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for (Long userId : userIds) {
+            executor.submit(() -> {
+                try {
+                    couponService.issueCoupon(new CouponIssueCommand(userId, couponId));
+                } catch (Exception ignored) {
+                    // 재고 부족 예외는 정상으로 간주
                 } finally {
                     latch.countDown();
                 }
@@ -132,10 +170,12 @@ class CouponServiceIntegrationTest extends IntegrationTestBase {
 
         latch.await();
 
-        long duplicateCount = exceptionMessages.stream()
-                .filter(msg -> msg.contains("이미 발급된 쿠폰입니다") || msg.contains("DUPLICATE_ISSUE_COUPON"))
-                .count();
+        long actualIssuedCount = couponIssueRepository.countByCouponId(couponId);
 
-        assertTrue(duplicateCount >= 1);
+        System.out.println("실제 발급된 수량: " + actualIssuedCount);
+
+        // 기대: 동시성 문제 발생 시 수량이 5를 초과함 / 동시성 문제 해결 시 수량은 5
+        assertTrue(actualIssuedCount == 5, "동시성 이슈 해결 시 쿠폰 재고만큼 발급 됨.");
     }
+
 }

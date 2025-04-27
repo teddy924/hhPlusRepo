@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.application.order;
 
-import jakarta.transaction.Transactional;
+import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountInfo;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.domain.coupon.CouponApplyInfo;
@@ -24,12 +24,17 @@ import kr.hhplus.be.server.interfaces.order.OrderDetailResponseDTO;
 import kr.hhplus.be.server.interfaces.order.OrderItemDTO;
 import kr.hhplus.be.server.interfaces.payment.PaymentDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderFacade {
@@ -45,9 +50,9 @@ public class OrderFacade {
     private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
 
-    @Transactional
     // 주문 + 결제
-    public void order(OrderCommand command) throws Exception {
+    @Transactional      // 	상태 변경 많고 실패 시 전체 롤백 필요
+    public OrderResult order(OrderCommand command) throws Exception {
 
         // 1. 상품 처리 일괄 수행
         Map<Product, Long> orderProductMap = productService.processOrderProducts(command.productGrp());
@@ -108,18 +113,26 @@ public class OrderFacade {
         orderSaveInfo.orderItems().forEach(item ->
                 productService.decreaseStock(item.getProduct().getId(), item.getQuantity())
         );
+
+        return OrderResult.builder().orderId(order.getId()).build();
     }
 
-    @Transactional
     // 주문 취소
+    @Transactional      // 상태 변경 다건 + 예외 시 전체 롤백 필요
     public void cancel(OrderCancelCommand command) throws Exception {
 
         // 1. 주문 이력 조회
         OrderSaveInfo orderSaveInfo = orderService.retrieveOrderInfo(command.orderId());
+
+        // 9. 상품 수량 복구
+        orderSaveInfo.orderItems().forEach(item -> productService.restoreStock(item.getProduct().getId(), item.getQuantity()));
+
         // 2. 주문 상태 변경 - 취소
         Order order = orderService.buildOrder(orderSaveInfo.order(), OrderStatus.CANCELED);
+
         // 3. 주문 취소 이력 추가
         OrderHistory cancelHistory = orderService.buildOrderHistory(order, OrderHistoryStatus.CANCELED);
+
         // 4. 주문 변경사항 저장
         orderService.saveOrderRelated(
                 OrderSaveInfo.builder()
@@ -149,7 +162,9 @@ public class OrderFacade {
         paymentService.save(
                 order,
                 PaymentInfo.builder()
-                        .orderId(command.orderId())
+                        .orderId(order.getId())
+                        .amount(order.getTotalAmount())
+                        .method(PaymentMethod.BALANCE)
                         .status(PaymentStatus.CANCELLED)
                         .build()
         );
@@ -160,8 +175,6 @@ public class OrderFacade {
             couponService.restoreCoupon(order.getUser().getId(), orderSaveInfo.orderCoupon().getCouponIssueId());
         }
 
-        // 9. 상품 수량 복구
-        orderSaveInfo.orderItems().forEach(item -> productService.restoreStock(item.getProduct().getId(), item.getQuantity()));
     }
 
     // 결제처리
@@ -182,13 +195,15 @@ public class OrderFacade {
     }
 
     // 주문 상세 조회
+    @Transactional(readOnly = true)     // LAZY 로딩 발생 가능, readOnly 붙이면 성능 개선 및 예외 방지
     public OrderDetailResponseDTO retrieveOrderDetail(Long orderId) {
         Order order = orderRepository.getById(orderId);
 
         List<OrderItemDTO> items = orderItemRepository.getDTOByOrderId(orderId);
         OrderAddressDTO address = orderAddressRepository.getDTOByOrderId(orderId);
 
-        Payment payment = paymentService.retrieveByOrderId(orderId);
+        Payment payment = paymentService.retrieve(orderId)
+                .orElseThrow(() ->new CustomException(NOT_EXIST_PAYMENT));
         PaymentDTO paymentDto = PaymentDTO.from(payment);
 
 

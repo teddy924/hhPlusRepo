@@ -7,6 +7,7 @@ import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -34,7 +35,9 @@ public class CouponService {
                 .toList();
     }
 
+
     // 쿠폰 발급
+    @Transactional      // 동시에 발급 시 동시성 문제, 롤백 필요
     public void issueCoupon(CouponIssueCommand couponIssueCommand) {
         CouponIssueInfo issueInfo = couponIssueCommand.toInfo();
 
@@ -42,18 +45,17 @@ public class CouponService {
         Coupon coupon = couponRepository.getById(issueInfo.couponId());
         coupon.expiredCoupon(); // 유효기간 확인
 
-        // 2. 중복 발급 검사
+        // 2. 중복 발급 확인 (CouponIssue 내부에서 책임지도록 위임)
         List<CouponIssue> alreadyIssuedList = couponIssueRepository.getAllByUserId(issueInfo.userId());
-        issueInfo.addExistingIssues(alreadyIssuedList); // 내부 리스트에 추가
+        issueInfo.addExistingIssues(alreadyIssuedList);
 
-        // 3. 중복 발급 확인 (CouponIssue 내부에서 책임지도록 위임)
-        CouponIssue issue = CouponIssue.create(issueInfo); // 예외 포함
+        CouponIssue issue = CouponIssue.create(issueInfo);
 
-        // 4. 재고 차감
+        // 3. 재고 차감
         coupon.useOneQuantity();
         couponRepository.save(coupon);
 
-        // 5. 발급 이력 저장
+        // 4. 발급 이력 저장
         couponIssueRepository.save(issue);
     }
 

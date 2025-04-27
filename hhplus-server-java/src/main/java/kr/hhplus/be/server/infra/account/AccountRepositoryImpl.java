@@ -16,12 +16,18 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     @Override
     public Account getByUserId(Long userId) {
-        return jpaAccountRepository.findByUserId(userId)
+        return jpaAccountRepository.findByUserIdWithLock(userId)
                 .orElseThrow(() -> new CustomException(NOT_EXIST_ACCOUNT));
     }
 
     @Override
     public void save(Account account) {
         jpaAccountRepository.save(account);
+    }
+
+    @Override
+    public Account findByUserId(Long userId) {
+        return jpaAccountRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(NOT_EXIST_ACCOUNT));
     }
 }

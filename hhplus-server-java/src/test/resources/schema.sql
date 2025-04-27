@@ -167,3 +167,22 @@ CREATE INDEX idx_coupon_issue_coupon_id ON coupon_issue(coupon_id);
 CREATE INDEX idx_coupon_issue_user_id ON coupon_issue(user_id);
 
 CREATE INDEX idx_coupon_efct_st_fns_dt ON coupon(efct_st_dt, efct_fns_dt);
+
+CREATE TABLE product_rank_snapshot (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    category VARCHAR(50) NOT NULL,
+    product_id BIGINT NOT NULL,
+    seller_id BIGINT NOT NULL,
+    product_name VARCHAR(200) NOT NULL,
+    price BIGINT NOT NULL,
+    stock INT NOT NULL,
+    efct_st_dt DATETIME NOT NULL,
+    efct_fns_dt DATETIME NOT NULL,
+    sales_quantity INT NOT NULL,
+    ranking INT NOT NULL,
+    snapshot_at TIMESTAMP NOT NULL,
+
+    UNIQUE KEY uq_category_ranking (category, ranking),
+    INDEX idx_category_product (category, product_id),
+    INDEX idx_snapshot_at (snapshot_at)
+);

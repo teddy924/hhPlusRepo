@@ -23,6 +23,8 @@ public enum ErrorCode {
     NOT_EXIST_ACCOUNT(BAD_REQUEST.value(),"C-3001","계좌가 존재하지 않습니다."),
     INVALID_ACCOUNT_AMOUNT(BAD_REQUEST.value(),"C-3002","충전/사용 금액은 100원 단위의 100원 이상이어야 합니다."),
     INVALID_USE_AMOUNT(BAD_REQUEST.value(),"C-3003","잔액이 부족합니다."),
+    FAIL_CHARGE_AMOUNT(BAD_REQUEST.value(),"C-3004","잔액이 충전에 실패하였습니다."),
+    FAIL_UES_AMOUNT(BAD_REQUEST.value(),"C-3005","잔액이 사용에 실패하였습니다."),
 
     // product
     OUT_OF_STOCK(BAD_REQUEST.value(),"C-4001","상품이 품절 상태 입니다."),

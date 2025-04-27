@@ -16,7 +16,7 @@ import java.util.List;
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @RestController
-@RequestMapping("/coupon")
+@RequestMapping("/api/coupon")
 @Tag(name = "쿠폰 API", description = "쿠폰 관련 API")
 @RequiredArgsConstructor
 public class CouponController {
