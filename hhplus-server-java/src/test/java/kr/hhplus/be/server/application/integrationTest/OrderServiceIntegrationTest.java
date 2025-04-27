@@ -1,6 +1,6 @@
-package kr.hhplus.be.server.application.order;
+package kr.hhplus.be.server.application.integrationTest;
 
-import kr.hhplus.be.server.IntegrationTestBase;
+import kr.hhplus.be.server.application.order.OrderService;
 import kr.hhplus.be.server.domain.order.OrderInfo;
 import kr.hhplus.be.server.domain.order.OrderSaveInfo;
 import kr.hhplus.be.server.domain.order.OrderStatus;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest
-class OrderServiceIntegrationTest extends IntegrationTestBase {
+class OrderServiceIntegrationTest {
 
     @Autowired
     private OrderService orderService;

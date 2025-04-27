@@ -1,5 +1,7 @@
-package kr.hhplus.be.server.application.product;
+package kr.hhplus.be.server.application.unitTest;
 
+import kr.hhplus.be.server.application.product.ProductResult;
+import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;

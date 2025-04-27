@@ -1,7 +1,9 @@
-package kr.hhplus.be.server.application.account;
+package kr.hhplus.be.server.application.integrationTest;
 
 import jakarta.persistence.EntityManager;
-import kr.hhplus.be.server.IntegrationTestBase;
+import jakarta.transaction.Transactional;
+import kr.hhplus.be.server.application.account.AccountCommand;
+import kr.hhplus.be.server.application.account.AccountFacade;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
@@ -25,7 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest
-class AccountFacadeIntegrationTest extends IntegrationTestBase {
+@Transactional
+class AccountFacadeIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AccountFacadeIntegrationTest.class);
     @Autowired

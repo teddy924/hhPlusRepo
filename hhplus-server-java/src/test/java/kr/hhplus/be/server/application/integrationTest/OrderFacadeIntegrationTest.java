@@ -1,6 +1,8 @@
-package kr.hhplus.be.server.application.order;
+package kr.hhplus.be.server.application.integrationTest;
 
-import kr.hhplus.be.server.IntegrationTestBase;
+import kr.hhplus.be.server.application.order.OrderCancelCommand;
+import kr.hhplus.be.server.application.order.OrderCommand;
+import kr.hhplus.be.server.application.order.OrderFacade;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.order.OrderAddressInfo;
 import kr.hhplus.be.server.domain.product.ProductRepository;
@@ -23,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest
-class OrderFacadeIntegrationTest extends IntegrationTestBase {
+class OrderFacadeIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(OrderFacadeIntegrationTest.class);
     @Autowired

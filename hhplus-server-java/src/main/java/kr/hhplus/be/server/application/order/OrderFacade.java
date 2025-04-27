@@ -19,9 +19,7 @@ import kr.hhplus.be.server.domain.payment.entity.Payment;
 import kr.hhplus.be.server.domain.product.entity.Product;
 import kr.hhplus.be.server.domain.user.UserRepository;
 import kr.hhplus.be.server.domain.user.entity.User;
-import kr.hhplus.be.server.interfaces.order.OrderAddressDTO;
 import kr.hhplus.be.server.interfaces.order.OrderDetailResponseDTO;
-import kr.hhplus.be.server.interfaces.order.OrderItemDTO;
 import kr.hhplus.be.server.interfaces.payment.PaymentDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -199,15 +197,15 @@ public class OrderFacade {
     public OrderDetailResponseDTO retrieveOrderDetail(Long orderId) {
         Order order = orderRepository.getById(orderId);
 
-        List<OrderItemDTO> items = orderItemRepository.getDTOByOrderId(orderId);
-        OrderAddressDTO address = orderAddressRepository.getDTOByOrderId(orderId);
+        List<OrderItemDTO> itemDTOs = orderService.retrieveOrderItemInfo(orderId);
+        OrderAddressDTO addressDTO = orderService.retrieveOrderAddressInfo(orderId);
 
         Payment payment = paymentService.retrieve(orderId)
                 .orElseThrow(() ->new CustomException(NOT_EXIST_PAYMENT));
         PaymentDTO paymentDto = PaymentDTO.from(payment);
 
 
-        return OrderDetailResponseDTO.from(order, items, address, paymentDto, order.getOrderStatus());
+        return OrderDetailResponseDTO.from(order, itemDTOs, addressDTO, paymentDto, order.getOrderStatus());
     }
 
 }

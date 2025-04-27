@@ -1,5 +1,6 @@
-package kr.hhplus.be.server.application.order;
+package kr.hhplus.be.server.application.unitTest;
 
+import kr.hhplus.be.server.application.order.OrderService;
 import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.domain.coupon.CouponDiscountType;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;

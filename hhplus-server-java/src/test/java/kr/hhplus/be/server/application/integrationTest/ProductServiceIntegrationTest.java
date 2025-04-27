@@ -1,7 +1,7 @@
-package kr.hhplus.be.server.application.product;
+package kr.hhplus.be.server.application.integrationTest;
 
-import jakarta.transaction.Transactional;
-import kr.hhplus.be.server.IntegrationTestBase;
+import kr.hhplus.be.server.application.product.ProductResult;
+import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 @SpringBootTest
 @Transactional
-class ProductServiceIntegrationTest extends IntegrationTestBase {
+class ProductServiceIntegrationTest {
 
     @Autowired
     private ProductService productService;

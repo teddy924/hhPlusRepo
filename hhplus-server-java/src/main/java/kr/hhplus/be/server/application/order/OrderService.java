@@ -141,4 +141,18 @@ public class OrderService {
                 .toList();
     }
 
+    public OrderAddressDTO retrieveOrderAddressInfo(Long orderId) {
+        OrderAddress address = orderAddressRepository.getByOrderId(orderId);
+        OrderAddressInfo addressInfo = OrderAddressInfo.from(address);
+        return OrderAddressDTO.from(addressInfo);
+    }
+
+    public List<OrderItemDTO> retrieveOrderItemInfo(Long orderId) {
+        List<OrderItem> items = orderItemRepository.getByOrderId(orderId);
+
+        return items.stream()
+                .map(OrderItemDTO::from)
+                .toList();
+    }
+
 }

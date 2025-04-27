@@ -1,7 +1,8 @@
-package kr.hhplus.be.server.application.account;
+package kr.hhplus.be.server.application.integrationTest;
 
-import jakarta.transaction.Transactional;
-import kr.hhplus.be.server.IntegrationTestBase;
+import kr.hhplus.be.server.application.account.AccountHistResult;
+import kr.hhplus.be.server.application.account.AccountResult;
+import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Comparator;
@@ -23,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 @SpringBootTest
 @Transactional
-class AccountServiceIntegrationTest extends IntegrationTestBase {
+class AccountServiceIntegrationTest {
 
     @Autowired
     private AccountService accountService;

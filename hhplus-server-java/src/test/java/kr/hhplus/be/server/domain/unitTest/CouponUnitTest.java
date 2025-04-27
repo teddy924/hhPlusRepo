@@ -1,7 +1,8 @@
-package kr.hhplus.be.server.domain.coupon.entity;
+package kr.hhplus.be.server.domain.unitTest;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.coupon.CouponDiscountType;
+import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

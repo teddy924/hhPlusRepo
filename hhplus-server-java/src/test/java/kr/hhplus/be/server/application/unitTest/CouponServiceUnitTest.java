@@ -1,5 +1,6 @@
-package kr.hhplus.be.server.application.coupon;
+package kr.hhplus.be.server.application.unitTest;
 
+import kr.hhplus.be.server.application.coupon.CouponService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;

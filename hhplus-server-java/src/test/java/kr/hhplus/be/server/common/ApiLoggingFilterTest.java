@@ -18,7 +18,7 @@ class ApiLoggingFilterTest {
     MockMvc mockMvc;
 
     @Test
-    @DisplayName("request,response가 로깅되는지만 확인")
+    @DisplayName("request,response가 로깅되는지 확인")
     void filterWorksTest() throws Exception {
         mockMvc.perform(get("/api/products/top"))
                 .andExpect(status().is4xxClientError());

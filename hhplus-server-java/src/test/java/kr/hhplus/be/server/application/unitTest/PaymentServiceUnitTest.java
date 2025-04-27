@@ -1,5 +1,6 @@
-package kr.hhplus.be.server.application.payment;
+package kr.hhplus.be.server.application.unitTest;
 
+import kr.hhplus.be.server.application.payment.PaymentService;
 import kr.hhplus.be.server.domain.order.entity.Order;
 import kr.hhplus.be.server.domain.payment.PaymentInfo;
 import kr.hhplus.be.server.domain.payment.PaymentMethod;

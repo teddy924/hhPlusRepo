@@ -1,6 +1,7 @@
-package kr.hhplus.be.server.domain.account.entity;
+package kr.hhplus.be.server.domain.unitTest;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.domain.account.entity.Account;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

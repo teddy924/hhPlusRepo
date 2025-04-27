@@ -1,5 +1,8 @@
-package kr.hhplus.be.server.application.account;
+package kr.hhplus.be.server.application.unitTest;
 
+import kr.hhplus.be.server.application.account.AccountHistResult;
+import kr.hhplus.be.server.application.account.AccountResult;
+import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
