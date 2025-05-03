@@ -60,6 +60,9 @@ dependencies {
 	// Redis
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
+	implementation("org.yaml:snakeyaml:2.2")
+	implementation("commons-io:commons-io:2.11.0")
+
 }
 
 tasks.withType<Test> {

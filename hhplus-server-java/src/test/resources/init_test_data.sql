@@ -53,3 +53,6 @@ INSERT INTO payment (order_id, amount, payment_method, payment_status, paid_dt, 
 VALUES (600004, 10000, 'BALANCE', 'COMPLETED', DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY));
 INSERT INTO order_history (id, order_id, status, sys_cret_dt)
 VALUES (500004, 600004, 'PAID', DATE_SUB(NOW(), INTERVAL 2 DAY));
+
+INSERT INTO product (id, seller_id, name, price, stock, category, efct_st_dt, efct_fns_dt, sys_cret_dt)
+VALUES (900004, 1, '주문동시성테스트상품', 10000, 10, 'TENT', DATE_SUB(NOW(), INTERVAL 10 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_SUB(NOW(), INTERVAL 10 DAY));

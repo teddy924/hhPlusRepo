@@ -7,7 +7,8 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Collections;
+import java.util.UUID;
 
 @Service
 public class RedisLockService implements LockService {
@@ -25,19 +26,29 @@ public class RedisLockService implements LockService {
         this.redisTemplate = redisTemplate;
     }
 
+    /**
+     * @param key 락 키
+     * @param timeout TTL (ex. Duration.ofSeconds(3))
+     * @return UUID 값 (락을 획득하지 못하면 null)
+     */
     @Override
-    public boolean tryLock(String key, String value, Duration expireTime) {
-        return Boolean.TRUE.equals(
-                redisTemplate.opsForValue().setIfAbsent(key, value, expireTime)
-        );
+    public String tryLock(String key, Duration timeout) {
+        String value = UUID.randomUUID().toString();
+        Boolean success = redisTemplate.opsForValue().setIfAbsent(key, value, timeout);
+        return Boolean.TRUE.equals(success) ? value : null;
     }
 
+    /**
+     * @param key 락 키
+     * @param value tryLock()에서 반환된 UUID 값
+     * @return true면 정상 해제, false면 실패 또는 락 주인이 아님
+     */
     @Override
     public boolean unlock(String key, String value) {
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setScriptText(UNLOCK_SCRIPT);
         script.setResultType(Long.class);
-        Long result = redisTemplate.execute(script, List.of(key), value);
+        Long result = redisTemplate.execute(script, Collections.singletonList(key), value);
         return result == 1;
     }
 }

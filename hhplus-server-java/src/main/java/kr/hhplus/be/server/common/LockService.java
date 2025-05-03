@@ -4,7 +4,7 @@ import java.time.Duration;
 
 public interface LockService {
 
-    boolean tryLock(String key, String value, Duration timeout);
+    String tryLock(String key, Duration timeout);
     boolean unlock(String key, String value);
 
 }
