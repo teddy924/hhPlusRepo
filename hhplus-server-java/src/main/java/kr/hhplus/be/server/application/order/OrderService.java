@@ -27,18 +27,28 @@ public class OrderService {
     private final OrderHistoryRepository orderHistoryRepository;
     private final OrderItemRepository orderItemRepository;
 
-    public Long calculateTotalAmount(Map<Product, Long> orderProductMap) {
+    public Long calculateTotalAmount(Map<Product, Integer> orderProductMap) {
         return orderProductMap.entrySet().stream()
                 .mapToLong(entry -> (entry.getKey().getPrice() * entry.getValue()))
                 .sum();
     }
 
-    public Order saveInitialOrder(User user, OrderInfo orderInfo) {
-        Order order = Order.builder()
+    public Order initialOrder(User user, Long totPrice ) {
+        return Order.builder()
                 .user(user)
-                .totalAmount(orderInfo.totPrice())
+                .totalAmount(totPrice)
                 .orderStatus(OrderStatus.CREATED)
                 .build();
+    }
+
+    public Order saveInitialOrder(User user, OrderInfo orderInfo) {
+//        Order order = Order.builder()
+//                .user(user)
+//                .totalAmount(orderInfo.totPrice())
+//                .orderStatus(OrderStatus.CREATED)
+//                .build();
+
+        Order order = initialOrder(user, orderInfo.totPrice());
 
         Long orderId = orderRepository.saveAndReturnId(order);
         return orderRepository.getById(orderId);
@@ -71,18 +81,18 @@ public class OrderService {
 
     }
 
-    public List<OrderItem> buildOrderItemList(Order order, Map<Product, Long> orderProductMap) {
+    public List<OrderItem> buildOrderItemList(Order order, Map<Product, Integer> orderProductMap) {
 
         List<OrderItem> orderItemList = new ArrayList<>(
                 orderProductMap.entrySet().stream()
                 .map(entry -> {
                     Product product = entry.getKey();
-                    Long quantity = entry.getValue();
+                    Integer quantity = entry.getValue();
 
                     return OrderItem.builder()
                             .order(order)
                             .product(product)
-                            .quantity(quantity.intValue())
+                            .quantity(quantity)
                             .totalAmount(product.getPrice() * quantity)
                             .build();
                 })

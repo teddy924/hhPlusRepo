@@ -13,7 +13,7 @@ public record OrderRequestDTO (
         @Schema(description = "유저 ID", example = "1")
         Long userId,
         @Schema(description = "상품 정보", example = "1020302010203040")
-        Map<Long, Long> productGrp,
+        Map<Long, Integer> productGrp,
         @Schema(description = "쿠폰 ID", example = "1230002")
         Long couponId,
         @Schema(description = "배송 정보")

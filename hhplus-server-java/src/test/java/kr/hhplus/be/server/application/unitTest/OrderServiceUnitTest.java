@@ -46,7 +46,7 @@ class OrderServiceUnitTest {
         Product p1 = new Product(1L, 321L,"10인용 텐트", 5000L, null, TENT, LocalDateTime.now().minusDays(10L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(10L), null);
         Product p2 = new Product(3L, 321L,"초거대 랜턴", 3000L, null, ACC, LocalDateTime.now().minusDays(10L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(10L), null);
 
-        Map<Product, Long> orderMap = Map.of(p1, 2L, p2, 3L);
+        Map<Product, Integer> orderMap = Map.of(p1, 2, p2, 3);
 
         Long result = orderService.calculateTotalAmount(orderMap);
 
@@ -89,7 +89,7 @@ class OrderServiceUnitTest {
         Product p1 = new Product(1L, 321L,"10인용 텐트", 5000L, null, TENT, LocalDateTime.now().minusDays(10L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(10L), null);
         Product p2 = new Product(3L, 321L,"초거대 랜턴", 3000L, null, ACC, LocalDateTime.now().minusDays(10L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(10L), null);
 
-        Map<Product, Long> orderMap = Map.of(p1, 2L, p2, 3L);
+        Map<Product, Integer> orderMap = Map.of(p1, 2, p2, 3);
 
         List<OrderItem> result = orderService.buildOrderItemList(order, orderMap);
 

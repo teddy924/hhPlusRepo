@@ -3,16 +3,20 @@ package kr.hhplus.be.server.application.unitTest;
 import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +34,15 @@ class ProductServiceUnitTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOps;
+
+    @Mock
+    private RedisSlaveSelector redisSlaveSelector;
 
     @Test
     @DisplayName("카테고리 없이 전체 상품 조회 성공")
@@ -70,7 +83,7 @@ class ProductServiceUnitTest {
     @Test
     @DisplayName("존재하지 않는 상품 ID 조회 시 예외 발생")
     void retrieveDetail_shouldThrow_whenProductNotFound() {
-        when(productRepository.getById(99L)).thenThrow(new CustomException(ErrorCode.NOT_EXIST_PRODUCT));
+        when(productRepository.findById(99L)).thenThrow(new CustomException(ErrorCode.NOT_EXIST_PRODUCT));
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 productService.retrieveDetail(99L));
@@ -82,7 +95,7 @@ class ProductServiceUnitTest {
     @DisplayName("상품 재고 감소 성공")
     void decreaseStock_success() {
         Product product = new Product(1L, 321L,"10인용 텐트", 1000L, 100, TENT, LocalDateTime.now().minusDays(10L), LocalDateTime.now().plusDays(30L), LocalDateTime.now().minusDays(10L), null);
-        when(productRepository.getById(1L)).thenReturn(product);
+        when(productRepository.findById(1L)).thenReturn(product);
 
         productService.decreaseStock(1L, 5);
 
@@ -93,7 +106,7 @@ class ProductServiceUnitTest {
     @Test
     @DisplayName("존재하지 않는 상품 재고 감소 시 예외")
     void decreaseStock_shouldThrow_whenProductNotFound() {
-        when(productRepository.getById(999L)).thenThrow(new CustomException(ErrorCode.NOT_EXIST_PRODUCT));
+        when(productRepository.findById(999L)).thenThrow(new CustomException(ErrorCode.NOT_EXIST_PRODUCT));
 
         CustomException ex = assertThrows(CustomException.class, () ->
                 productService.decreaseStock(999L, 5));
@@ -105,14 +118,23 @@ class ProductServiceUnitTest {
     @Test
     @DisplayName("주문 상품 처리 시 모든 상품 유효성 검사 통과")
     void processOrderProducts_success() {
-        Map<Long, Long> productGrp = Map.of(1L, 2L);
+        Map<Long, Integer> productGrp = Map.of(1L, 2);
         Product product = mock(Product.class);
 
-        when(productRepository.getById(1L)).thenReturn(product);
+        when(productRepository.findById(1L)).thenReturn(product);
 
-        Map<Product, Long> result = productService.processOrderProducts(productGrp);
+        Map<Product, Integer> result = productService.processOrderProducts(productGrp);
 
         assertTrue(result.containsKey(product));
         verify(product).validSalesAvailability();
+    }
+
+    @BeforeEach
+    void setUp() {
+        // Redis 관련 객체들 Mocking 후 미호출 시 Unnecessary stubbings 해결을 위해 lenient() 사용
+        // RedisTemplate stubbing
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        // RedisSlaveSelector stubbing
+        lenient().when(redisSlaveSelector.getRandomSlave()).thenReturn(redisTemplate);
     }
 }

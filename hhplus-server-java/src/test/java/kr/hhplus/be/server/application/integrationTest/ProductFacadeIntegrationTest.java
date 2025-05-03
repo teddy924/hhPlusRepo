@@ -127,9 +127,9 @@ class ProductFacadeIntegrationTest {
 
         log.debug("rank5ProductIds: {}", rank5ProductIds);
 
-//        Assertions.assertThat(rank5ProductIds)
-//                .as("동시성 테스트 결과: 조회된 TOP5 상품ID %s (취소 상품ID: %d)", rank5ProductIds, cancelProductId)
-//                .contains(cancelProductId);
+        Assertions.assertThat(rank5ProductIds)
+                .as("동시성 테스트 결과: 조회된 TOP5 상품ID %s (취소 상품ID: %d)", rank5ProductIds, cancelProductId)
+                .contains(cancelProductId);
     }
 
     @BeforeAll

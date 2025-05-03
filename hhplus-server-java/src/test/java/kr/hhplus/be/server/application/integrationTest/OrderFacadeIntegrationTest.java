@@ -39,7 +39,7 @@ class OrderFacadeIntegrationTest {
         OrderCommand command = OrderCommand.builder()
                 .userId(800001L)
                 .productGrp(Map.of(
-                        900001L, 200L
+                        900001L, 200
                 ))
                 .couponId(null)
                 .orderAddressInfo(address())
@@ -55,9 +55,9 @@ class OrderFacadeIntegrationTest {
         OrderCommand command = OrderCommand.builder()
                 .userId(2L)
                 .productGrp(Map.of(
-                        10L, 10L,
-                        11L, 20L,
-                        12L,30L
+                        10L, 10,
+                        11L, 20,
+                        12L,30
                 ))
                 .couponId(9999L)
                 .orderAddressInfo(address())
@@ -73,9 +73,9 @@ class OrderFacadeIntegrationTest {
         OrderCommand command = OrderCommand.builder()
                 .userId(1L)
                 .productGrp(Map.of(
-                        10L, 10L,
-                        11L, 20L,
-                        12L,30L
+                        10L, 10,
+                        11L, 20,
+                        12L,30
                 ))
                 .couponId(3L)
                 .orderAddressInfo(address())
@@ -91,9 +91,9 @@ class OrderFacadeIntegrationTest {
         OrderCommand command = OrderCommand.builder()
                 .userId(2L)
                 .productGrp(Map.of(
-                        10L, 10L,
-                        11L, 20L,
-                        12L,30L
+                        10L, 10,
+                        11L, 20,
+                        12L,30
                 ))
                 .couponId(null)
                 .orderAddressInfo(address())
@@ -108,9 +108,9 @@ class OrderFacadeIntegrationTest {
         OrderCommand command = OrderCommand.builder()
                 .userId(800001L)
                 .productGrp(Map.of(
-                        10L, 10L,
-                        11L, 20L,
-                        12L,30L
+                        10L, 10,
+                        11L, 20,
+                        12L,30
                 ))
                 .couponId(4L)
                 .orderAddressInfo(address())
@@ -196,8 +196,81 @@ class OrderFacadeIntegrationTest {
         log.debug("stockAfter: " + stockAfter);
 
         // 취소 2건이 각각 1개씩만 복구되어야 함 (중복/누락 없이)
-        assertEquals(stockBefore + 2 * orderQuantity, stockAfter,
+        assertEquals(stockBefore + (2 * orderQuantity), stockAfter,
                 "동시 주문 취소시 재고가 2건만큼 정확히 복구되어야 함");
+    }
+
+    @Test
+    @DisplayName("동일 상품 주문 두 건 동시 주문시 재고 복구 동시성 테스트")
+    void concurrentOrder_shouldDecreaseStockExactlyOncePerOrder() throws Exception {
+        Long productId = 80L;
+        int orderQuantity = 1;
+        OrderCommand command1 = OrderCommand.builder()
+                .userId(801L)
+                .productGrp(Map.of(
+                        80L, orderQuantity
+                ))
+                .couponId(4L)
+                .orderAddressInfo(address())
+                .build();
+        OrderCommand command2 = OrderCommand.builder()
+                .userId(802L)
+                .productGrp(Map.of(
+                        80L, orderQuantity
+                ))
+                .couponId(4L)
+                .orderAddressInfo(address())
+                .build();
+
+        Product productBefore = productRepository.findById(productId);
+        int stockBefore = productBefore.getStock();
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(2);
+
+        Runnable orderTaskA = () -> {
+            try {
+                startLatch.await();
+                orderFacade.order(command1);
+            } catch (Exception e) {
+                log.warn("Order A exception: " + e.getMessage());
+            } finally {
+                doneLatch.countDown();
+            }
+        };
+
+        Runnable orderTaskB = () -> {
+            try {
+                startLatch.await();
+                orderFacade.order(command2);
+            } catch (Exception e) {
+                log.warn("Order B exception: " + e.getMessage());
+            } finally {
+                doneLatch.countDown();
+            }
+        };
+
+        executor.submit(orderTaskA);
+        executor.submit(orderTaskB);
+
+        // 동시에 시작!
+        startLatch.countDown();
+        // 둘 다 끝날 때까지 대기
+        doneLatch.await();
+
+        executor.shutdown();
+
+        // --- 검증 ---
+        Product productAfter = productRepository.findById(productId);
+        int stockAfter = productAfter.getStock();
+
+        log.debug("stockBefore: " + stockBefore);
+        log.debug("stockAfter: " + stockAfter);
+
+        // 취소 2건이 각각 1개씩만 복구되어야 함 (중복/누락 없이)
+        assertEquals(stockBefore - (2 * orderQuantity), stockAfter,
+                "동시 주문 시 재고가 2건만큼 정확히 차감되어야 함");
     }
 
 }

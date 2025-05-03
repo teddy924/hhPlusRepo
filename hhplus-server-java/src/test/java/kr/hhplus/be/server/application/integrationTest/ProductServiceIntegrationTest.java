@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.integrationTest;
 
+import kr.hhplus.be.server.application.product.ProductLockService;
 import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.exception.CustomException;
@@ -7,9 +8,10 @@ import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
@@ -19,9 +21,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest
-@Transactional
 class ProductServiceIntegrationTest {
 
+    private static final Logger log = LoggerFactory.getLogger(ProductServiceIntegrationTest.class);
     @Autowired
     private ProductService productService;
     @Autowired
@@ -77,12 +79,13 @@ class ProductServiceIntegrationTest {
         Long productId = 2L;
         int quantity = 2;
 
-        Product before = productRepository.getById(productId);
+        Product before = productRepository.findById(productId);
         int beforeStock = before.getStock();
+        log.debug("before stock: {}", beforeStock);
 
         productService.decreaseStock(productId, quantity);
 
-        Product after = productRepository.getById(productId);
+        Product after = productRepository.findById(productId);
         assertEquals(beforeStock - quantity, after.getStock());
     }
 
@@ -98,25 +101,26 @@ class ProductServiceIntegrationTest {
 
     @Test
     @DisplayName("정상적으로 재고 복구")
-    void restoreStock_shouldIncreaseCorrectly() {
+    void restoreStock_shouldIncreaseCorrectly() throws Exception {
         Long productId = 4L;
         int quantity = 5;
 
-        Product before = productRepository.getById(productId);
+        Product before = productRepository.findById(productId);
         int beforeStock = before.getStock();
+        log.debug("before stock: " + before.getStock());
 
         productService.restoreStock(productId, quantity);
 
-        Product after = productRepository.getById(productId);
+        Product after = productRepository.findById(productId);
         assertEquals(beforeStock + quantity, after.getStock());
     }
 
     @Test
     @DisplayName("존재하지 않는 상품 포함 시 예외 발생")
     void processOrderProducts_shouldThrow_whenInvalidProduct() {
-        Map<Long, Long> orderMap = Map.of(
-                1L, 2L,
-                9999L, 1L
+        Map<Long, Integer> orderMap = Map.of(
+                1L, 2,
+                9999L, 1
         );
 
         CustomException ex = assertThrows(CustomException.class, () -> productService.processOrderProducts(orderMap));
