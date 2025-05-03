@@ -4,6 +4,7 @@ import kr.hhplus.be.server.application.account.AccountHistResult;
 import kr.hhplus.be.server.application.account.AccountResult;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
@@ -11,6 +12,7 @@ import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import kr.hhplus.be.server.domain.user.entity.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,13 +42,22 @@ class AccountServiceUnitTest {
     @Mock
     private AccountHistRepository accountHistRepository;
 
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOps;
+
+    @Mock
+    private RedisSlaveSelector redisSlaveSelector;
+
     @Test
     @DisplayName("잔액 충전 시 계좌에서 charge 호출 후 저장되어야 한다")
     void chargeAmount_shouldIncreaseBalanceAndSave() throws Exception {
         // given
         AccountInfo info = new AccountInfo(21L, 1000L);
         Account mockAccount = mock(Account.class);
-        when(accountRepository.getByUserId(21L)).thenReturn(mockAccount);
+        when(accountRepository.findByUserId(21L)).thenReturn(mockAccount);
 
         // when
         accountService.chargeAmount(info);
@@ -60,7 +73,7 @@ class AccountServiceUnitTest {
         // given
         AccountInfo info = new AccountInfo(21L, 500L);
         Account mockAccount = mock(Account.class);
-        when(accountRepository.getByUserId(21L)).thenReturn(mockAccount);
+        when(accountRepository.findByUserId(21L)).thenReturn(mockAccount);
         when(mockAccount.canUse(500L)).thenReturn(true);
 
         // when
@@ -86,7 +99,7 @@ class AccountServiceUnitTest {
                 .sysCretDt(LocalDateTime.now())
                 .build();
 
-        when(accountRepository.getByUserId(21L)).thenReturn(account);
+        when(accountRepository.findByUserId(21L)).thenReturn(account);
 
         // when
         AccountResult result = accountService.retrieveAccount(21L);
@@ -126,7 +139,7 @@ class AccountServiceUnitTest {
                 .sysCretDt(LocalDateTime.now())
                 .build();
 
-        when(accountRepository.getByUserId(21L)).thenReturn(account);
+        when(accountRepository.findByUserId(21L)).thenReturn(account);
         when(accountHistRepository.getAllByAccountId(21L)).thenReturn(List.of(history1, history2));
 
         // when
@@ -155,7 +168,7 @@ class AccountServiceUnitTest {
         AccountInfo info = new AccountInfo(21L, 300L);
         AccountHistType type = AccountHistType.CHARGE;
 
-        when(accountRepository.getByUserId(21L)).thenReturn(account);
+        when(accountRepository.findByUserId(21L)).thenReturn(account);
 
         // when
         accountService.saveHist(info, type);
@@ -175,7 +188,7 @@ class AccountServiceUnitTest {
     void chargeAmount_shouldThrowException_whenAccountNotFound() {
         // given
         AccountInfo info = new AccountInfo(999999L, 1000L);
-        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        when(accountRepository.findByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.chargeAmount(info));
@@ -187,7 +200,7 @@ class AccountServiceUnitTest {
     void useAmount_shouldThrowException_whenAccountNotFound() {
         // given
         AccountInfo info = new AccountInfo(999999L, 500L);
-        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        when(accountRepository.findByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.useAmount(info));
@@ -198,7 +211,7 @@ class AccountServiceUnitTest {
     @DisplayName("잔액 조회 시 존재하지 않는 계좌일 경우 예외가 발생해야 한다")
     void retrieveAccount_shouldThrowException_whenAccountNotFound() {
         // given
-        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        when(accountRepository.findByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccount(999999L));
@@ -209,10 +222,19 @@ class AccountServiceUnitTest {
     @DisplayName("잔액 이력 조회 시 존재하지 않는 계좌일 경우 예외가 발생해야 한다")
     void retrieveAccountHist_shouldThrowException_whenAccountNotFound() {
         // given
-        when(accountRepository.getByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
+        when(accountRepository.findByUserId(999999L)).thenThrow(new CustomException(NOT_EXIST_ACCOUNT));
 
         // when & then
         CustomException ex = assertThrows(CustomException.class, () -> accountService.retrieveAccountHist(999999L));
         assertTrue(ex.getMessage().contains("계좌가 존재하지 않습니다."));
+    }
+
+    @BeforeEach
+    void setUp() {
+        // Redis 관련 객체들 Mocking 후 미호출 시 Unnecessary stubbings 해결을 위해 lenient() 사용
+        // RedisTemplate stubbing
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        // RedisSlaveSelector stubbing
+        lenient().when(redisSlaveSelector.getRandomSlave()).thenReturn(redisTemplate);
     }
 }

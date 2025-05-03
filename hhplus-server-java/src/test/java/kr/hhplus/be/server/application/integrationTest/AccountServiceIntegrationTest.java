@@ -4,6 +4,7 @@ import kr.hhplus.be.server.application.account.AccountHistResult;
 import kr.hhplus.be.server.application.account.AccountResult;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.EmbeddedRedisConfig;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
@@ -12,9 +13,11 @@ import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Comparator;
@@ -24,13 +27,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest
-@Transactional
+@Import(EmbeddedRedisConfig.class)
 class AccountServiceIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(AccountServiceIntegrationTest.class);
 
     @Autowired
     private AccountService accountService;
+
     @Autowired
     AccountRepository accountRepository;
+
     @Autowired
     private AccountHistRepository accountHistRepository;
 
@@ -41,7 +48,7 @@ class AccountServiceIntegrationTest {
         long chargeAmount = 5000L;
 
         accountService.chargeAmount(new AccountInfo(userId, chargeAmount));
-        Account result = accountRepository.getByUserId(userId);
+        Account result = accountRepository.findByUserId(userId);
 
         assertEquals(100000L + chargeAmount, result.getBalance());
     }
@@ -53,7 +60,7 @@ class AccountServiceIntegrationTest {
         long useAmount = 3000L;
 
         accountService.useAmount(new AccountInfo(userId, useAmount));
-        Account result = accountRepository.getByUserId(userId);
+        Account result = accountRepository.findByUserId(userId);
 
         assertEquals(100000L - useAmount, result.getBalance());
     }
@@ -100,7 +107,7 @@ class AccountServiceIntegrationTest {
         long amount = 3000L;
         AccountInfo info = new AccountInfo(userId, amount);
 
-        Account account = accountRepository.getByUserId(userId);
+        Account account = accountRepository.findByUserId(userId);
         List<AccountHistory> initHistories = accountHistRepository.getAllByAccountId(account.getId());
 
         accountService.saveHist(info, AccountHistType.USE);
@@ -115,4 +122,33 @@ class AccountServiceIntegrationTest {
         assertEquals(AccountHistType.USE, histories.get(0).getStatus());
         assertEquals(amount, histories.get(0).getAmount());
     }
+
+    @Test
+    @DisplayName("잔액보다 큰 금액 사용 시 예외 발생")
+    void use_withInsufficientBalance_shouldThrowException() {
+        // given
+        Long userId = 17L;
+        long amount = 500_000L;
+
+        AccountInfo info = new AccountInfo(userId, 500_000L);
+
+        // when & then
+        Exception exception = assertThrows(CustomException.class, () -> accountService.useAmount(info));
+        log.debug(exception.getMessage());
+        assertTrue(exception.getMessage().contains("잔액이 부족합니다."));
+    }
+
+    @Test
+    @DisplayName("음수 금액 충전 시 예외 발생")
+    void charge_withNegativeAmount_shouldThrowException() {
+        // given
+        Long userId = 3L;
+        long invalidAmount = -1000L;
+        AccountInfo info = new AccountInfo(userId, invalidAmount);
+
+        // when & then
+        Exception exception = assertThrows(CustomException.class, () -> accountService.chargeAmount(info));
+        assertTrue(exception.getMessage().contains("충전/사용 금액은 100원 단위의 100원 이상이어야 합니다."));
+    }
+
 }
