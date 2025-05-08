@@ -26,14 +26,14 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccountHistRepository accountHistRepository;
     private final RedisSlaveSelector redisSlaveSelector;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     public AccountService(
             AccountRepository accountRepository
             , AccountHistRepository accountHistRepository
             , RedisSlaveSelector redisSlaveSelector
-            , @Qualifier("masterRedisTemplate") RedisTemplate<String, String> redisTemplate
+            , @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate
     ) {
         this.accountRepository = accountRepository;
         this.accountHistRepository = accountHistRepository;
@@ -54,7 +54,14 @@ public class AccountService {
         saveHist(info, AccountHistType.CHARGE);
 
         String cacheKey = "account:" + info.userId();
-        redisTemplate.opsForValue().set(cacheKey,account.getBalance().toString());
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                AccountResult.builder()
+                        .userId(info.userId())
+                        .balance(account.getBalance())
+                        .build()
+        );
+
     }
 
     // 잔액 사용
@@ -72,22 +79,41 @@ public class AccountService {
         saveHist(info, AccountHistType.USE);
 
         String cacheKey = "account:" + info.userId();
-        redisTemplate.opsForValue().set(cacheKey,account.getBalance().toString());
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                AccountResult.builder()
+                        .userId(info.userId())
+                        .balance(account.getBalance())
+                        .build()
+        );
 
     }
 
-    // 잔액 조회
-    @Transactional
+    @Transactional(readOnly = true)
     public AccountResult retrieveAccount(Long userId) throws Exception {
-        RedisTemplate<String, String> slaveRedis = redisSlaveSelector.getRandomSlave();
+        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
 
         String cacheKey = "account:" + userId;
+
+        // 조회
+        Object cached = slaveRedis.opsForValue().get(cacheKey);
+        if (cached != null && cached instanceof AccountResult) {
+            return (AccountResult) cached;
+        }
+
+        // 캐시에 없으면 DB 조회
         Account account = accountRepository.findByUserId(userId);
 
-        slaveRedis.opsForValue().set(cacheKey,account.getBalance().toString());
+        // 조회 후 마스터 Redis에 캐시 저장
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                AccountResult.builder()
+                        .userId(userId)
+                        .balance(account.getBalance())
+                        .build()
+        );
 
         return new AccountResult(account.getUser().getId(), account.getBalance());
-
     }
 
     // 잔액 변동 이력 조회
