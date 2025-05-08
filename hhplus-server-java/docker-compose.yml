@@ -14,6 +14,42 @@ services:
       - db-data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password
 
+#  redis-master:
+#    image: redis:7
+#    container_name: redis-master
+#    ports:
+#      - "6379:6379"
+#    command: [ "redis-server", "--appendonly", "yes" ]
+#    networks:
+#      - redis-net
+#
+#  redis-slave1:
+#    image: redis:7
+#    container_name: redis-slave1
+#    ports:
+#      - "6380:6379"
+#    command: [ "redis-server", "--replicaof", "redis-master", "6379" ]
+#    depends_on:
+#      - redis-master
+#    networks:
+#      - redis-net
+#
+#  redis-slave2:
+#    image: redis:7
+#    container_name: redis-slave2
+#    ports:
+#      - "6381:6379"
+#    command: [ "redis-server", "--replicaof", "redis-master", "6379" ]
+#    depends_on:
+#      - redis-master
+#    networks:
+#      - redis-net
 
 volumes:
   db-data:
+
+version: '3.8'
+
+#networks:
+#  redis-net:
+#    driver: bridge

@@ -1,12 +1,17 @@
 package kr.hhplus.be.server.application.product;
 
+import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +22,21 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisSlaveSelector redisSlaveSelector;
+
+    public ProductService(
+            ProductRepository productRepository
+            , @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate
+            , RedisSlaveSelector redisSlaveSelector
+    ){
+        this.productRepository = productRepository;
+        this.redisTemplate = redisTemplate;
+        this.redisSlaveSelector = redisSlaveSelector;
+    }
 
     // 상품 목록 조회
     public List<ProductResult> retrieveAll (String category) {
@@ -47,38 +63,62 @@ public class ProductService {
 
     // 상품 상세 조회
     public ProductResult retrieveDetail (Long productId) {
+        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
+
+        String cacheKey = CacheKey.product(productId);
+
+        // 조회
+        Object cached = slaveRedis.opsForValue().get(cacheKey);
+        if (cached != null && cached instanceof ProductResult) {
+            return (ProductResult) cached;
+        }
 
         Product product = retrieveProduct(productId);
 
-        return ProductResult.from(product);
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                ProductResult.from(product)
+        );
 
+        return ProductResult.from(product);
     }
 
     public Product retrieveProduct (Long productId) {
 
-        return productRepository.getById(productId);
+        return productRepository.findById(productId);
 
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void decreaseStock(Long productId, int quantity) {
-            Product product = productRepository.getById(productId);
+            Product product = productRepository.findById(productId);
             product.decreaseStock(quantity);
+            log.debug("decrease stock: " + product.getStock());
             productRepository.save(product);
+
+        String cacheKey = CacheKey.product(productId);
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                ProductResult.from(product)
+        );
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void restoreStock(Long productId, int quantity) {
-        try {
-            log.debug("restoring stock for product {}", productId);
-            Product product = productRepository.getById(productId);
-            product.increaseStock(quantity);
-            productRepository.save(product);
-        } catch (Exception e) {
-            throw new CustomException(FAIL_RESTORE_STOCK);
-        }
+        Product product = productRepository.findById(productId);
+        product.increaseStock(quantity);
+        log.debug("restore stock: " + product.getStock());
+        productRepository.save(product);
+
+        String cacheKey = CacheKey.product(productId);
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                ProductResult.from(product)
+        );
     }
 
-    public Map<Product, Long> processOrderProducts(Map<Long, Long> productGrp) {
-        Map<Product, Long> result = productGrp.entrySet().stream()
+    public Map<Product, Integer> processOrderProducts(Map<Long, Integer> productGrp) {
+        Map<Product, Integer> result = productGrp.entrySet().stream()
                 .collect(Collectors.toMap(
                         entry -> retrieveProduct(entry.getKey()),
                         Map.Entry::getValue
