@@ -41,11 +41,18 @@ public class TestcontainersConfiguration {
 			// schema.sql 실행 (옵션)
 			runSqlFile(conn, "src/test/resources/schema.sql");
 
-			// 프로시저 정의: 각 파일 통째로 실행
-			runProcedureFile(conn, "src/test/resources/account/insert_account_procedures.sql");
-			runProcedureFile(conn, "src/test/resources/product/insert_product_procedures.sql");
-			runProcedureFile(conn, "src/test/resources/coupon/insert_coupon_procedures.sql");
-			runProcedureFile(conn, "src/test/resources/order/insert_order_full_procedures.sql");
+//			// 프로시저 정의: 각 파일 통째로 실행
+//			runProcedureFile(conn, "src/test/resources/account/insert_account_procedures.sql");
+//			runProcedureFile(conn, "src/test/resources/product/insert_product_procedures.sql");
+//			runProcedureFile(conn, "src/test/resources/coupon/insert_coupon_procedures.sql");
+//			runProcedureFile(conn, "src/test/resources/order/insert_order_full_procedures.sql");
+
+			runSqlFile(conn, "src/test/resources/account/insert_account_data.sql");
+			runSqlFile(conn, "src/test/resources/coupon/insert_coupon_data.sql");
+			runSqlFile(conn, "src/test/resources/order/insert_order_data.sql");
+			runSqlFile(conn, "src/test/resources/product/insert_product_data.sql");
+
+			runSqlFile(conn, "src/test/resources/init_test_data.sql");
 
 
 		} catch (Exception e) {

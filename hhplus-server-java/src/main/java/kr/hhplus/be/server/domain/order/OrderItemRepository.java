@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.domain.order;
 
 import kr.hhplus.be.server.domain.order.entity.OrderItem;
-import kr.hhplus.be.server.interfaces.order.OrderItemDTO;
+import kr.hhplus.be.server.application.order.OrderItemDTO;
 
 import java.util.List;
 

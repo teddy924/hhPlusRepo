@@ -1,14 +1,18 @@
 package kr.hhplus.be.server.application.account;
 
+import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
 import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -17,17 +21,31 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccountHistRepository accountHistRepository;
+    private final RedisSlaveSelector redisSlaveSelector;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
+    public AccountService(
+            AccountRepository accountRepository
+            , AccountHistRepository accountHistRepository
+            , RedisSlaveSelector redisSlaveSelector
+            , @Qualifier("masterRedisTemplate") RedisTemplate<String, String> redisTemplate
+    ) {
+        this.accountRepository = accountRepository;
+        this.accountHistRepository = accountHistRepository;
+        this.redisSlaveSelector = redisSlaveSelector;
+        this.redisTemplate = redisTemplate;
+    }
 
     // 잔액 충전
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void chargeAmount (AccountInfo info) throws Exception {
 
-        Account account = accountRepository.getByUserId(info.userId());
+        Account account = accountRepository.findByUserId(info.userId());
 
         account.charge(info.amount());
 
@@ -35,13 +53,15 @@ public class AccountService {
 
         saveHist(info, AccountHistType.CHARGE);
 
+        String cacheKey = "account:" + info.userId();
+        redisTemplate.opsForValue().set(cacheKey,account.getBalance().toString());
     }
 
     // 잔액 사용
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void useAmount (AccountInfo info) throws Exception {
 
-        Account account = accountRepository.getByUserId(info.userId());
+        Account account = accountRepository.findByUserId(info.userId());
 
         if (account.canUse(info.amount())) {
             account.use(info.amount());
@@ -51,13 +71,20 @@ public class AccountService {
 
         saveHist(info, AccountHistType.USE);
 
+        String cacheKey = "account:" + info.userId();
+        redisTemplate.opsForValue().set(cacheKey,account.getBalance().toString());
+
     }
 
     // 잔액 조회
     @Transactional
     public AccountResult retrieveAccount(Long userId) throws Exception {
+        RedisTemplate<String, String> slaveRedis = redisSlaveSelector.getRandomSlave();
 
-        Account account = accountRepository.getByUserId(userId);
+        String cacheKey = "account:" + userId;
+        Account account = accountRepository.findByUserId(userId);
+
+        slaveRedis.opsForValue().set(cacheKey,account.getBalance().toString());
 
         return new AccountResult(account.getUser().getId(), account.getBalance());
 
@@ -67,7 +94,7 @@ public class AccountService {
     @Transactional
     public List<AccountHistResult> retrieveAccountHist(Long userId) throws Exception {
 
-        Account account = accountRepository.getByUserId(userId);
+        Account account = accountRepository.findByUserId(userId);
 
         List<AccountHistory> histories = accountHistRepository.getAllByAccountId(account.getId())
                 .stream()
@@ -85,7 +112,7 @@ public class AccountService {
     @Transactional
     public void saveHist(AccountInfo info, AccountHistType histType) {
 
-        Account account = accountRepository.getByUserId(info.userId());
+        Account account = accountRepository.findByUserId(info.userId());
 
         AccountHistory history = AccountHistory.builder()
                 .account(account) // 연관된 Account 엔티티 직접 설정
