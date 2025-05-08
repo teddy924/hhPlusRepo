@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.product;
 
+import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
@@ -64,7 +65,7 @@ public class ProductService {
     public ProductResult retrieveDetail (Long productId) {
         RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
 
-        String cacheKey = "product:" + productId;
+        String cacheKey = CacheKey.product(productId);
 
         // 조회
         Object cached = slaveRedis.opsForValue().get(cacheKey);
@@ -95,7 +96,7 @@ public class ProductService {
             log.debug("decrease stock: " + product.getStock());
             productRepository.save(product);
 
-        String cacheKey = "product:" + productId;
+        String cacheKey = CacheKey.product(productId);
         redisTemplate.opsForValue().set(
                 cacheKey,
                 ProductResult.from(product)
@@ -109,7 +110,7 @@ public class ProductService {
         log.debug("restore stock: " + product.getStock());
         productRepository.save(product);
 
-        String cacheKey = "product:" + productId;
+        String cacheKey = CacheKey.product(productId);
         redisTemplate.opsForValue().set(
                 cacheKey,
                 ProductResult.from(product)

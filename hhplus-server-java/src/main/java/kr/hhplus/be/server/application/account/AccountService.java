@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.account;
 
+import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
@@ -53,7 +54,7 @@ public class AccountService {
 
         saveHist(info, AccountHistType.CHARGE);
 
-        String cacheKey = "account:" + info.userId();
+        String cacheKey = CacheKey.account(info.userId());
         redisTemplate.opsForValue().set(
                 cacheKey,
                 AccountResult.builder()
@@ -78,7 +79,7 @@ public class AccountService {
 
         saveHist(info, AccountHistType.USE);
 
-        String cacheKey = "account:" + info.userId();
+        String cacheKey = CacheKey.account(info.userId());
         redisTemplate.opsForValue().set(
                 cacheKey,
                 AccountResult.builder()
@@ -93,7 +94,7 @@ public class AccountService {
     public AccountResult retrieveAccount(Long userId) throws Exception {
         RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
 
-        String cacheKey = "account:" + userId;
+        String cacheKey = CacheKey.account(userId);
 
         // 조회
         Object cached = slaveRedis.opsForValue().get(cacheKey);
