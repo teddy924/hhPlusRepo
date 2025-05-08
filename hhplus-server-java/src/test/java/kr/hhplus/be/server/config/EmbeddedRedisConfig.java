@@ -4,8 +4,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.boot.test.context.TestConfiguration;
 import redis.embedded.RedisServer;
+import redis.embedded.core.RedisServerBuilder;
 
-import java.io.File;
 import java.io.IOException;
 
 
@@ -18,16 +18,21 @@ public class EmbeddedRedisConfig {
 
     @PostConstruct
     public void startRedis() throws IOException {
-        File redisBinary = new File("/opt/homebrew/bin/redis-server");
+        master = new RedisServer(6379);
 
-        master = new RedisServer(6379, redisBinary);
-        slave1 = new RedisServer(6380, redisBinary);
-        slave2 = new RedisServer(6381, redisBinary);
+        slave1 = new RedisServerBuilder()
+                .port(6380)
+                .setting("replicaof 127.0.0.1 6379")
+                .build();
+
+        slave2 = new RedisServerBuilder()
+                .port(6381)
+                .setting("replicaof 127.0.0.1 6379")
+                .build();
 
         master.start();
         slave1.start();
         slave2.start();
-
     }
 
     @PreDestroy
