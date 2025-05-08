@@ -1,11 +1,10 @@
 package kr.hhplus.be.server.application.product;
 
-import kr.hhplus.be.server.common.LockService;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,17 +24,17 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final LockService lockService;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisSlaveSelector redisSlaveSelector;
 
     public ProductService(
             ProductRepository productRepository
-            , LockService lockService
-            , @Qualifier("masterRedisTemplate") RedisTemplate<String, String> redisTemplate
+            , @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate
+            , RedisSlaveSelector redisSlaveSelector
     ){
         this.productRepository = productRepository;
-        this.lockService = lockService;
         this.redisTemplate = redisTemplate;
+        this.redisSlaveSelector = redisSlaveSelector;
     }
 
     // 상품 목록 조회
@@ -64,11 +62,24 @@ public class ProductService {
 
     // 상품 상세 조회
     public ProductResult retrieveDetail (Long productId) {
+        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
+
+        String cacheKey = "product:" + productId;
+
+        // 조회
+        Object cached = slaveRedis.opsForValue().get(cacheKey);
+        if (cached != null && cached instanceof ProductResult) {
+            return (ProductResult) cached;
+        }
 
         Product product = retrieveProduct(productId);
 
-        return ProductResult.from(product);
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                ProductResult.from(product)
+        );
 
+        return ProductResult.from(product);
     }
 
     public Product retrieveProduct (Long productId) {
@@ -85,7 +96,10 @@ public class ProductService {
             productRepository.save(product);
 
         String cacheKey = "product:" + productId;
-        redisTemplate.opsForValue().set(cacheKey,product.getStock().toString());
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                ProductResult.from(product)
+        );
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -96,7 +110,10 @@ public class ProductService {
         productRepository.save(product);
 
         String cacheKey = "product:" + productId;
-        redisTemplate.opsForValue().set(cacheKey,product.getStock().toString());
+        redisTemplate.opsForValue().set(
+                cacheKey,
+                ProductResult.from(product)
+        );
     }
 
     public Map<Product, Integer> processOrderProducts(Map<Long, Integer> productGrp) {

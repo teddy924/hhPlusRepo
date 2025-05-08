@@ -1,9 +1,10 @@
 package kr.hhplus.be.server.application.integrationTest;
 
-import kr.hhplus.be.server.application.product.ProductLockService;
 import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.EmbeddedRedisConfig;
+import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
@@ -21,13 +25,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest
+@Import(EmbeddedRedisConfig.class)
 class ProductServiceIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProductServiceIntegrationTest.class);
+
     @Autowired
     private ProductService productService;
+
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    @Qualifier("masterRedisTemplate")
+    RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    RedisSlaveSelector redisSlaveSelector;
 
     @Test
     @DisplayName("카테고리 없이 전체 상품 조회")
@@ -127,4 +141,23 @@ class ProductServiceIntegrationTest {
         assertTrue(ex.getMessage().contains("해당 상품이 존재하지 않습니다."));
 
     }
+
+    @Test
+    @DisplayName("상품 상세조회 시 캐시 저장 후 슬레이브에서 조회되는지 확인")
+    void retrieveDetail_shouldCacheToMaster_andBeVisibleToSlave() throws Exception {
+        Long productId = 21L;
+        String cacheKey = "product:" + productId;
+
+        redisTemplate.delete(cacheKey); // 캐시 제거
+
+        productService.retrieveDetail(productId); // 캐시 생성
+
+        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
+        Object cached = slaveRedis.opsForValue().get(cacheKey);
+
+        assertNotNull(cached, "슬레이브 캐시에 데이터가 있어야 함");
+        assertInstanceOf(ProductResult.class, cached);
+        assertEquals(productId, ((ProductResult) cached).productId());
+    }
+
 }
