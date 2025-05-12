@@ -20,9 +20,9 @@ public class RedisLockService implements LockService {
                 "return 0 " +
             "end";
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public RedisLockService(@Qualifier("masterRedisTemplate") RedisTemplate<String, String> redisTemplate) {
+    public RedisLockService(@Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

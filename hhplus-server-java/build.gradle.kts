@@ -62,6 +62,8 @@ dependencies {
 	testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
 	implementation("org.yaml:snakeyaml:2.2")
 	implementation("commons-io:commons-io:2.11.0")
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
 
 }
 

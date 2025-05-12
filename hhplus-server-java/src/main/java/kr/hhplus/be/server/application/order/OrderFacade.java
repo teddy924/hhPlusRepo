@@ -46,8 +46,6 @@ public class OrderFacade {
     private final PaymentService paymentService;
 
     private final OrderRepository orderRepository;
-    private final OrderAddressRepository orderAddressRepository;
-    private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
 
     // 주문 + 결제
@@ -128,7 +126,7 @@ public class OrderFacade {
         OrderSaveInfo orderSaveInfo = orderService.retrieveOrderInfo(command.orderId());
 
         // 2. 상품 수량 복구
-        orderSaveInfo.orderItems().forEach(item -> {productLockService.restoreStockLock(item.getProduct().getId(), item.getQuantity());});
+        orderSaveInfo.orderItems().forEach(item -> productLockService.restoreStockLock(item.getProduct().getId(), item.getQuantity()));
 
         // 3. 주문 상태 변경 - 취소
         Order order = orderService.buildOrder(orderSaveInfo.order(), OrderStatus.CANCELED);

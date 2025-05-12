@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.account;
 
 import kr.hhplus.be.server.common.DistributedLockExecutor;
+import kr.hhplus.be.server.common.LockKey;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.LockAcquireFailException;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ public class AccountLockService {
 
     public void chargeAmountLock(AccountCommand command) {
         int retryCount = 5;
-        String lockKey = "lock:account:" + command.userId();
+        String lockKey = LockKey.account(command.userId());
 
         while (retryCount-- > 0) {
             log.debug("retryCount: " + retryCount);
@@ -52,7 +53,7 @@ public class AccountLockService {
 
     public void useAmountLock(AccountCommand command) {
         int retryCount = 5;
-        String lockKey = "lock:account:" + command.userId();
+        String lockKey = LockKey.account(command.userId());
 
         while (retryCount-- > 0) {
             try {

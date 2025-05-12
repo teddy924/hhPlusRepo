@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.product;
 
 import kr.hhplus.be.server.common.DistributedLockExecutor;
+import kr.hhplus.be.server.common.LockKey;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.LockAcquireFailException;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class ProductLockService {
 
     public void restoreStockLock(Long productId, int quantity) {
         int retryCount = 5;
-        String lockKey = "lock:product:" + productId;
+        String lockKey = LockKey.product(productId);
 
         while (retryCount-- > 0) {
             try {
@@ -45,7 +46,7 @@ public class ProductLockService {
 
     public void decreaseStockLock(Long productId, int quantity) {
         int retryCount = 5;
-        String lockKey = "lock:product:" + productId;
+        String lockKey = LockKey.product(productId);
 
         while (retryCount-- > 0) {
             try {

@@ -5,6 +5,7 @@ import kr.hhplus.be.server.application.account.AccountResult;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.EmbeddedRedisConfig;
+import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
@@ -16,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Comparator;
@@ -40,6 +43,13 @@ class AccountServiceIntegrationTest {
 
     @Autowired
     private AccountHistRepository accountHistRepository;
+
+    @Autowired
+    @Qualifier("masterRedisTemplate")
+    RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    RedisSlaveSelector redisSlaveSelector;
 
     @Test
     @DisplayName("잔액 충전 시 잔액이 증가해야 한다")
@@ -130,7 +140,7 @@ class AccountServiceIntegrationTest {
         Long userId = 17L;
         long amount = 500_000L;
 
-        AccountInfo info = new AccountInfo(userId, 500_000L);
+        AccountInfo info = new AccountInfo(userId, amount);
 
         // when & then
         Exception exception = assertThrows(CustomException.class, () -> accountService.useAmount(info));
@@ -149,6 +159,28 @@ class AccountServiceIntegrationTest {
         // when & then
         Exception exception = assertThrows(CustomException.class, () -> accountService.chargeAmount(info));
         assertTrue(exception.getMessage().contains("충전/사용 금액은 100원 단위의 100원 이상이어야 합니다."));
+    }
+
+    @Test
+    @DisplayName("계좌 조회시 캐시에 저장되는지 확인")
+    void retrieveAccount_shouldCacheResult() throws Exception {
+        Long userId = 19L;
+        String cacheKey = "account:" + userId;
+
+        // 1. 캐시 삭제 (보장)
+        redisTemplate.delete(cacheKey);
+
+        // 2. 조회하여 캐시 저장
+        AccountResult result = accountService.retrieveAccount(userId);
+        assertNotNull(result);
+
+        // 3. Redis 캐시에 값이 존재하는지 확인
+        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
+        Object cached = slaveRedis.opsForValue().get(cacheKey);
+
+        assertNotNull(cached);
+        log.debug("Retrieved from cache: {}, class: {}", cached, cached.getClass());
+        assertInstanceOf(AccountResult.class, cached);
     }
 
 }

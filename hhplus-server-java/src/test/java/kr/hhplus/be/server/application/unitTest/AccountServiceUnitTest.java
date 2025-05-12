@@ -43,10 +43,10 @@ class AccountServiceUnitTest {
     private AccountHistRepository accountHistRepository;
 
     @Mock
-    private RedisTemplate<String, String> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
-    private ValueOperations<String, String> valueOps;
+    private ValueOperations<String, Object> valueOps;
 
     @Mock
     private RedisSlaveSelector redisSlaveSelector;
