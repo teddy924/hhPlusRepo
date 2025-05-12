@@ -1,7 +1,6 @@
 package kr.hhplus.be.server.domain.order;
 
 import kr.hhplus.be.server.domain.order.entity.OrderAddress;
-import kr.hhplus.be.server.interfaces.order.OrderAddressDTO;
 
 public interface OrderAddressRepository {
 
@@ -9,5 +8,4 @@ public interface OrderAddressRepository {
 
     void save(OrderAddress orderAddress);
 
-    OrderAddressDTO getDTOByOrderId(Long orderId);
 }

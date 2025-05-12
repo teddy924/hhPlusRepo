@@ -3,7 +3,6 @@ package kr.hhplus.be.server.infra.order;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.order.OrderAddressRepository;
 import kr.hhplus.be.server.domain.order.entity.OrderAddress;
-import kr.hhplus.be.server.interfaces.order.OrderAddressDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -25,8 +24,4 @@ public class OrderAddressRepositoryImpl implements OrderAddressRepository {
         jpaOrderAddressRepository.save(orderAddress);
     }
 
-    @Override
-    public OrderAddressDTO getDTOByOrderId(Long orderId) {
-        return jpaOrderAddressRepository.findDTOByOrderId(orderId).orElseThrow(() -> new CustomException(NOT_EXIST_ORDER_ADDRESS));
-    }
 }

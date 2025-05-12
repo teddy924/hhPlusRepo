@@ -37,7 +37,7 @@ public class CouponService {
 
 
     // 쿠폰 발급
-    @Transactional      // 동시에 발급 시 동시성 문제, 롤백 필요
+    @Transactional
     public void issueCoupon(CouponIssueCommand couponIssueCommand) {
         CouponIssueInfo issueInfo = couponIssueCommand.toInfo();
 

@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.domain.order;
 
+import kr.hhplus.be.server.domain.order.entity.OrderAddress;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -16,4 +17,18 @@ public record OrderAddressInfo (
         LocalDateTime sysCretDt,
         LocalDateTime sysChgDt
 ) {
+    public static OrderAddressInfo from(OrderAddress address) {
+        return new OrderAddressInfo(
+                address.getOrder().getId(),
+                address.getReceiverName(),
+                address.getPhone(),
+                address.getAddress1(),
+                address.getAddress2(),
+                address.getZipcode(),
+                address.getMemo(),
+                address.getSysCretDt(),
+                address.getSysChgDt()
+        );
+    }
+
 }

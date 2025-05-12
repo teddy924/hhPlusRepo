@@ -8,7 +8,7 @@ import java.util.Map;
 @Builder
 public record OrderCommand (
         Long userId,
-        Map<Long, Long> productGrp,
+        Map<Long, Integer> productGrp,
         Long couponId,
         OrderAddressInfo orderAddressInfo
 ) {

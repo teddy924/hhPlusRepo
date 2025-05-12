@@ -2,7 +2,7 @@ package kr.hhplus.be.server.infra.order;
 
 import kr.hhplus.be.server.domain.order.OrderItemRepository;
 import kr.hhplus.be.server.domain.order.entity.OrderItem;
-import kr.hhplus.be.server.interfaces.order.OrderItemDTO;
+import kr.hhplus.be.server.application.order.OrderItemDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

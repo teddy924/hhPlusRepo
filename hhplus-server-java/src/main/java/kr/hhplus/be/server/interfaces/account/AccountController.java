@@ -21,7 +21,7 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 public class AccountController {
 
     private final AccountService accountService;
-    private final AccountFacade accountFacade;
+    private final AccountLockService accountLockService;
 
     @GetMapping("/balance")
     @SwaggerSuccess(responseType = AccountResponseDTO.class)
@@ -66,7 +66,7 @@ public class AccountController {
 
         AccountCommand command = accountRequestDTO.toCommand();
 
-        accountFacade.charge(command);
+        accountLockService.chargeAmountLock(command);
 
         return ResponseEntity.ok(new ResponseApi<>("충전 완료"));
     }
@@ -84,7 +84,7 @@ public class AccountController {
 
         AccountCommand command = accountRequestDTO.toCommand();
 
-        accountFacade.use(command);
+        accountLockService.useAmountLock(command);
 
         return ResponseEntity.ok(new ResponseApi<>("사용 완료"));
     }

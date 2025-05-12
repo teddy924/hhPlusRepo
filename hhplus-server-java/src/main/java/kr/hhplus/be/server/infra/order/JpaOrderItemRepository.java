@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.infra.order;
 
 import kr.hhplus.be.server.domain.order.entity.OrderItem;
-import kr.hhplus.be.server.interfaces.order.OrderItemDTO;
+import kr.hhplus.be.server.application.order.OrderItemDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
