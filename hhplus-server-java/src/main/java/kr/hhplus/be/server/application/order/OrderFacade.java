@@ -24,10 +24,12 @@ import kr.hhplus.be.server.interfaces.order.OrderDetailResponseDTO;
 import kr.hhplus.be.server.interfaces.payment.PaymentDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,128 +54,163 @@ public class OrderFacade {
     @Transactional      // 	상태 변경 많고 실패 시 전체 롤백 필요
     public OrderResult order(OrderCommand command) throws Exception {
 
-        // 1. 상품 처리 일괄 수행
-        Map<Product, Integer> orderProductMap = productService.processOrderProducts(command.productGrp());
-        Long totalPrice = orderService.calculateTotalAmount(orderProductMap);
+        List<Pair<Long, Integer>> decreasedStocks = new ArrayList<>();
 
-        User user = userRepository.getById(command.userId());
+        try {
+            // 1. 상품 처리 일괄 수행
+            Map<Product, Integer> orderProductMap = productService.processOrderProducts(command.productGrp());
+            Long totalPrice = orderService.calculateTotalAmount(orderProductMap);
 
-        // 2. 재고 차감
-       command.productGrp().forEach(productLockService::decreaseStockLock);
+            User user = userRepository.getById(command.userId());
 
-        // 3. 쿠폰 적용
-        CouponInfo couponInfo = null;
-        CouponApplyInfo couponApplyInfo = CouponApplyInfo.builder().discountAmount(0L).finalPayableAmount(totalPrice).build();
+            // 2. 재고 차감
+            for (Map.Entry<Long, Integer> entry : command.productGrp().entrySet()) {
+                Long productId = entry.getKey();
+                Integer quantity = entry.getValue();
 
-        if (command.couponId() != null) {
-            // 쿠폰, 발급이력 조회
-            couponInfo = couponService.retrieveCouponInfo(new CouponIssueCommand(command.userId(), command.couponId()));
+                productLockService.decreaseStockLock(productId, quantity);
+                decreasedStocks.add(Pair.of(productId, quantity));
+            }
 
-            // 할인 금액 계산
-            couponApplyInfo = couponInfo.applyDiscount(totalPrice);
+            // 3. 쿠폰 적용
+            CouponInfo couponInfo = null;
+            CouponApplyInfo couponApplyInfo = CouponApplyInfo.builder().discountAmount(0L).finalPayableAmount(totalPrice).build();
+
+            if (command.couponId() != null) {
+                // 쿠폰, 발급이력 조회
+                couponInfo = couponService.retrieveCouponInfo(new CouponIssueCommand(command.userId(), command.couponId()));
+
+                // 할인 금액 계산
+                couponApplyInfo = couponInfo.applyDiscount(totalPrice);
+            }
+
+            // 4. 주문 저장
+            OrderInfo.OrderInfoBuilder orderInfoBuilder = OrderInfo.builder()
+                    .userId(user.getId())
+                    .productGrp(command.productGrp())
+                    .totPrice(totalPrice);
+
+            OrderInfo orderInfo = orderInfoBuilder.build();
+
+            Order order = orderService.saveInitialOrder(user, orderInfo);
+
+            // 5. 결제 처리 (잔액 차감 + 이력 저장 + 결제 이력 저장)
+            processPayment(command.userId(), couponApplyInfo.finalPayableAmount(), order);
+
+            // 6. 주문 상세 정보 저장
+            OrderCoupon orderCoupon = null;
+            if (couponInfo != null && couponInfo.couponIssue().getCoupon().getId() != null) {
+                orderCoupon = orderService.buildOrderCoupon(couponInfo, order, couponApplyInfo.discountAmount());
+            }
+
+            OrderSaveInfo.OrderSaveInfoBuilder builder = OrderSaveInfo.builder()
+                    .order(order)
+                    .orderAddress(orderService.buildOrderAddress(order, command.orderAddressInfo()))
+                    .orderItems(orderService.buildOrderItemList(order, orderProductMap))
+                    .orderHistory(orderService.buildOrderHistory(order, OrderHistoryStatus.PAID));
+
+            if (orderCoupon != null) {
+                builder.orderCoupon(orderCoupon);
+            }
+
+            OrderSaveInfo orderSaveInfo = builder.build();
+            orderService.saveOrderRelated(orderSaveInfo);
+
+            // 7. 쿠폰 사용 처리
+            if (couponInfo != null) {
+                couponService.useCoupon(couponInfo);
+            }
+
+            return OrderResult.builder().orderId(order.getId()).build();
+        } catch (Exception e) {
+            // 재고 복구
+            for (Pair<Long, Integer> stock : decreasedStocks) {
+                try {
+                    productLockService.restoreStockLock(stock.getLeft(), stock.getRight());
+                } catch (Exception ex) {
+                    log.error("재고 복구 실패: productId={}, quantity={}", stock.getLeft(), stock.getRight(), ex);
+                }
+            }
+            throw e;
         }
-
-        // 4. 주문 저장
-        OrderInfo.OrderInfoBuilder orderInfoBuilder = OrderInfo.builder()
-                .userId(user.getId())
-                .productGrp(command.productGrp())
-                .totPrice(totalPrice);
-
-        OrderInfo orderInfo = orderInfoBuilder.build();
-
-        Order order = orderService.saveInitialOrder(user, orderInfo);
-
-        // 5. 결제 처리 (잔액 차감 + 이력 저장 + 결제 이력 저장)
-        processPayment(command.userId(), couponApplyInfo.finalPayableAmount(), order);
-
-        // 6. 주문 상세 정보 저장
-        OrderCoupon orderCoupon = null;
-        if (couponInfo != null && couponInfo.couponIssue().getCoupon().getId() != null) {
-            orderCoupon = orderService.buildOrderCoupon(couponInfo, order, couponApplyInfo.discountAmount());
-        }
-
-        OrderSaveInfo.OrderSaveInfoBuilder builder = OrderSaveInfo.builder()
-                .order(order)
-                .orderAddress(orderService.buildOrderAddress(order, command.orderAddressInfo()))
-                .orderItems(orderService.buildOrderItemList(order, orderProductMap))
-                .orderHistory(orderService.buildOrderHistory(order, OrderHistoryStatus.PAID));
-
-        if (orderCoupon != null) {
-            builder.orderCoupon(orderCoupon);
-        }
-
-        OrderSaveInfo orderSaveInfo = builder.build();
-        orderService.saveOrderRelated(orderSaveInfo);
-
-        // 7. 쿠폰 사용 처리
-        if (couponInfo != null) {
-            couponService.useCoupon(couponInfo);
-        }
-
-//        // 7. 상품 수량 차감
-//        orderSaveInfo.orderItems().forEach(item ->
-//                productService.decreaseStock(item.getProduct().getId(), item.getQuantity())
-//        );
-
-        return OrderResult.builder().orderId(order.getId()).build();
     }
 
     // 주문 취소
     @Transactional      // 상태 변경 다건 + 예외 시 전체 롤백 필요
     public void cancel(OrderCancelCommand command) throws Exception {
 
-        // 1. 주문 이력 조회
-        OrderSaveInfo orderSaveInfo = orderService.retrieveOrderInfo(command.orderId());
+        List<Pair<Long, Integer>> restoreStocks = new ArrayList<>();
 
-        // 2. 상품 수량 복구
-        orderSaveInfo.orderItems().forEach(item -> productLockService.restoreStockLock(item.getProduct().getId(), item.getQuantity()));
+        try {
+            // 1. 주문 이력 조회
+            OrderSaveInfo orderSaveInfo = orderService.retrieveOrderInfo(command.orderId());
 
-        // 3. 주문 상태 변경 - 취소
-        Order order = orderService.buildOrder(orderSaveInfo.order(), OrderStatus.CANCELED);
+            // 2. 상품 수량 복구
+            for (OrderItem item : orderSaveInfo.orderItems()) {
+                Long productId = item.getProduct().getId();
+                Integer quantity = item.getQuantity();
+                productLockService.restoreStockLock(productId, quantity);
+                restoreStocks.add(Pair.of(productId, quantity));
+            }
 
-        // 4. 주문 취소 이력 추가
-        OrderHistory cancelHistory = orderService.buildOrderHistory(order, OrderHistoryStatus.CANCELED);
+            // 3. 주문 상태 변경 - 취소
+            Order order = orderService.buildOrder(orderSaveInfo.order(), OrderStatus.CANCELED);
 
-        // 5. 주문 변경사항 저장
-        orderService.saveOrderRelated(
-                OrderSaveInfo.builder()
-                        .order(order)
-                        .orderHistory(cancelHistory)
-                        .build()
-        );
+            // 4. 주문 취소 이력 추가
+            OrderHistory cancelHistory = orderService.buildOrderHistory(order, OrderHistoryStatus.CANCELED);
 
-        // 6. 잔액 복구
-        accountService.chargeAmount(
-                AccountInfo.builder()
-                        .userId(order.getUser().getId())
-                        .amount(order.getTotalAmount()) // 또는 orderPayment.getAmount()
-                        .build()
-        );
+            // 5. 주문 변경사항 저장
+            orderService.saveOrderRelated(
+                    OrderSaveInfo.builder()
+                            .order(order)
+                            .orderHistory(cancelHistory)
+                            .build()
+            );
 
-        // 7. 잔액 이력 저장
-        accountService.saveHist(
-                AccountInfo.builder()
-                        .userId(order.getUser().getId())
-                        .amount(order.getTotalAmount())
-                        .build(),
-                AccountHistType.REFUND
-        );
+            // 6. 잔액 복구
+            accountService.chargeAmount(
+                    AccountInfo.builder()
+                            .userId(order.getUser().getId())
+                            .amount(order.getTotalAmount()) // 또는 orderPayment.getAmount()
+                            .build()
+            );
 
-        // 8. 결제 상태 변경
-        paymentService.save(
-                order,
-                PaymentInfo.builder()
-                        .orderId(order.getId())
-                        .amount(order.getTotalAmount())
-                        .method(PaymentMethod.BALANCE)
-                        .status(PaymentStatus.CANCELLED)
-                        .build()
-        );
+            // 7. 잔액 이력 저장
+            accountService.saveHist(
+                    AccountInfo.builder()
+                            .userId(order.getUser().getId())
+                            .amount(order.getTotalAmount())
+                            .build(),
+                    AccountHistType.REFUND
+            );
+
+            // 8. 결제 상태 변경
+            paymentService.save(
+                    order,
+                    PaymentInfo.builder()
+                            .orderId(order.getId())
+                            .amount(order.getTotalAmount())
+                            .method(PaymentMethod.BALANCE)
+                            .status(PaymentStatus.CANCELLED)
+                            .build()
+            );
 
 
-        // 9. 쿠폰 복구
-        if (orderSaveInfo.orderCoupon() != null) {
-            couponService.restoreCoupon(order.getUser().getId(), orderSaveInfo.orderCoupon().getCouponIssueId());
+            // 9. 쿠폰 복구
+            if (orderSaveInfo.orderCoupon() != null) {
+                couponService.restoreCoupon(order.getUser().getId(), orderSaveInfo.orderCoupon().getCouponIssueId());
+            }
+        }
+        catch (Exception e) {
+            // 재고 복구
+            for (Pair<Long, Integer> stock : restoreStocks) {
+                try {
+                    productLockService.decreaseStockLock(stock.getLeft(), stock.getRight());
+                } catch (Exception ex) {
+                    log.error("재고 복구 실패: productId={}, quantity={}", stock.getLeft(), stock.getRight(), ex);
+                }
+            }
+            throw e;
         }
 
     }

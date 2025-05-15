@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("test")
 @Testcontainers
 @SpringBootTest
 @Import(EmbeddedRedisConfig.class)
@@ -213,7 +215,7 @@ class OrderFacadeIntegrationTest {
                 .productGrp(Map.of(
                         80L, orderQuantity
                 ))
-                .couponId(4L)
+                .couponId(1L)
                 .orderAddressInfo(address())
                 .build();
         OrderCommand command2 = OrderCommand.builder()
@@ -221,7 +223,7 @@ class OrderFacadeIntegrationTest {
                 .productGrp(Map.of(
                         80L, orderQuantity
                 ))
-                .couponId(4L)
+                .couponId(2L)
                 .orderAddressInfo(address())
                 .build();
 
