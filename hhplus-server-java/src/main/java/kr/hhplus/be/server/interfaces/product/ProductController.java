@@ -78,6 +78,7 @@ public class ProductController {
     @SwaggerError({
 
     })
+    @Operation(summary = "실시간 상품 랭킹 조회", description = "실시간으로 상품 랭킹을 조회한다.")
     public ResponseEntity<ResponseApi<List<ProductRankResponseDTO>>> realRank(
             @RequestParam(value = "category", required = false) String category
     ) {

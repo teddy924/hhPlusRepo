@@ -60,4 +60,20 @@ public class CouponController {
 
     }
 
+    @PostMapping("/FirstComeIssueCoupon")
+    @SwaggerSuccess(responseType = ResponseApi.class)
+    @SwaggerError({
+
+    })
+    @Operation(summary = "선착순 쿠폰 발급", description = "한정 수량 쿠폰을 선착순으로 지급한다.")
+    public ResponseEntity<ResponseApi<String>> firstComeIssueCoupon(
+            @RequestBody CouponIssueRequestDTO couponIssueRequestDTO
+    ) {
+        CouponIssueCommand couponIssueCommand = couponIssueRequestDTO.toCommand();
+
+        couponService.issueCouponFirstCome(couponIssueCommand);
+
+        return ResponseEntity.ok(new ResponseApi<>("쿠폰 발급 성공"));
+    }
+
 }
