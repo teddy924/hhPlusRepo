@@ -2,7 +2,6 @@ package kr.hhplus.be.server.interfaces.product;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.application.product.ProductFacade;
 import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.application.product.ProductSalesResult;
 import kr.hhplus.be.server.application.product.ProductService;
@@ -18,13 +17,12 @@ import java.util.List;
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/api/product")
 @Tag(name = "상품 API", description = "상품 관련 API")
 @RequiredArgsConstructor
 public class ProductController {
 
     private final ProductService productService;
-    private final ProductFacade productFacade;
 
     @GetMapping
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
@@ -42,7 +40,7 @@ public class ProductController {
 
     }
 
-    @GetMapping("/api/detail")
+    @GetMapping("/detail")
     @SwaggerSuccess(responseType = ProductResponseDTO.class)
     @SwaggerError({
             NOT_EXIST_PRODUCT
@@ -68,7 +66,7 @@ public class ProductController {
             @RequestParam(value = "category", required = false) String category
     ) {
 
-        List<ProductSalesResult> resultList = productFacade.retrieveRankSnapshot(category);
+        List<ProductSalesResult> resultList = productService.retrieveRankSnapshot(category);
 
         return ResponseEntity.ok(new ResponseApi<>(true, "상위 상품 목록 조회 성공", resultList.stream().map(ProductResponseDTO::from).toList()));
 

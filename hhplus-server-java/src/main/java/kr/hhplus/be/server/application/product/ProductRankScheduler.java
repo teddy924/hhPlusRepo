@@ -1,10 +1,15 @@
 package kr.hhplus.be.server.application.product;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRankSnapshotRepository;
 import kr.hhplus.be.server.domain.product.entity.ProductRankSnapshot;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +21,23 @@ import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ProductRankScheduler {
 
     private final ProductFacade productFacade;
     private final ProductRankSnapshotRepository productRankSnapshotRepository;
+    @Getter
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
+
+    public ProductRankScheduler(ProductFacade productFacade,
+                                ProductRankSnapshotRepository productRankSnapshotRepository,
+                                @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate,
+                                ObjectMapper objectMapper) {
+        this.productFacade = productFacade;
+        this.productRankSnapshotRepository = productRankSnapshotRepository;
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @Scheduled(cron = "0 0 * * * *") // 1시간마다 예시
     @Transactional
@@ -34,7 +51,6 @@ public class ProductRankScheduler {
         categories.add("ALL");
 
         for (String category : categories) {
-            log.debug("category chk: {}", category);
             // 2. 기존 snapshot 데이터 삭제
             productRankSnapshotRepository.deleteByCategoryAndSnapshotAt(category, snapshotAt);
 
@@ -47,9 +63,17 @@ public class ProductRankScheduler {
                 productRankSnapshotRepository.save(
                         ProductRankSnapshot.from(result, category, i + 1, snapshotAt)
                 );
-                log.debug("snapshot category: {}", category);
-                log.debug("product rank category: {}", rankList.get(i).category());
-                log.debug("product rank productId: {}", rankList.get(i).productName());
+            }
+
+            // Redis 캐시 저장
+            try {
+                String key = CacheKey.ranking(category);
+                String json = objectMapper.writeValueAsString(rankList);
+                redisTemplate.opsForValue().set(key, json);
+                log.info("update cacheKey: {}", key);
+                log.info("update rank: {}", json);
+            } catch (JsonProcessingException e) {
+                log.error("Redis 캐싱 실패 - category: {}", category, e);
             }
         }
 
