@@ -16,6 +16,8 @@ VALUES (800002,80002, 0, NOW());
 
 INSERT INTO coupon (id, name, discount_type, discount_value, limit_quantity, remain_quantity, efct_st_dt, efct_fns_dt, sys_cret_dt)
 VALUES (700001, '테스트쿠폰', 'AMOUNT', 1000, 100, 5, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_SUB(NOW(), INTERVAL 10 DAY));
+INSERT INTO coupon (id, name, discount_type, discount_value, limit_quantity, remain_quantity, efct_st_dt, efct_fns_dt, sys_cret_dt)
+VALUES (700002, '테스트쿠폰2', 'AMOUNT', 1000, 100, 0, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_SUB(NOW(), INTERVAL 10 DAY));
 
 INSERT INTO product (id, seller_id, name, price, stock, category, efct_st_dt, efct_fns_dt, sys_cret_dt)
 VALUES (900002, 1, '상위상품동시성테스트상품', 1000, 200000, 'TENT', DATE_SUB(NOW(), INTERVAL 10 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_SUB(NOW(), INTERVAL 10 DAY));
