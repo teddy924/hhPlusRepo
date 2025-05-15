@@ -1,14 +1,21 @@
 package kr.hhplus.be.server.application.integrationTest;
 
+import kr.hhplus.be.server.application.order.OrderCancelCommand;
+import kr.hhplus.be.server.application.order.OrderFacade;
+import kr.hhplus.be.server.application.product.ProductRankScheduler;
 import kr.hhplus.be.server.application.product.ProductResult;
+import kr.hhplus.be.server.application.product.ProductSalesResult;
 import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.EmbeddedRedisConfig;
 import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,25 +23,33 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("test")
 @Testcontainers
 @SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Import(EmbeddedRedisConfig.class)
 class ProductServiceIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProductServiceIntegrationTest.class);
 
     @Autowired
-    private ProductService productService;
+    ProductService productService;
 
     @Autowired
-    private ProductRepository productRepository;
+    ProductRepository productRepository;
 
     @Autowired
     @Qualifier("masterRedisTemplate")
@@ -42,6 +57,12 @@ class ProductServiceIntegrationTest {
 
     @Autowired
     RedisSlaveSelector redisSlaveSelector;
+
+    @Autowired
+    ProductRankScheduler productRankScheduler;
+
+    @Autowired
+    OrderFacade orderFacade;
 
     @Test
     @DisplayName("카테고리 없이 전체 상품 조회")
@@ -158,6 +179,76 @@ class ProductServiceIntegrationTest {
         assertNotNull(cached, "슬레이브 캐시에 데이터가 있어야 함");
         assertInstanceOf(ProductResult.class, cached);
         assertEquals(productId, ((ProductResult) cached).productId());
+    }
+
+    @Test
+    @DisplayName("최근 3일 상위 상품 조회와 그 일자에 해당하는 주문의 취소 동시성 이슈 테스트")
+    void rank5Product_concurrencyWithCancelOrder() throws InterruptedException {
+        Long cancelOrderId = 600001L;
+        Long cancelProductId = 900002L;
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);  // 동시에 시작시키는 용도
+        CountDownLatch doneLatch = new CountDownLatch(2);   // 모든 작업 종료 대기용
+
+        List<Long> rank5ProductIds = Collections.synchronizedList(new ArrayList<>());
+
+        // 최근 3일 상위 상품 조회
+        executor.submit(() -> {
+            try {
+                startLatch.await();
+                List<ProductSalesResult> res = productService.retrieveRankSnapshot(null);
+                rank5ProductIds.addAll(res.stream().map(ProductSalesResult::productId).toList());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                doneLatch.countDown();
+            }
+        });
+
+        // 주문 취소 동시 발생
+        executor.submit(() -> {
+            try {
+                startLatch.await();
+                orderFacade.cancel(new OrderCancelCommand(cancelOrderId));
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                doneLatch.countDown();
+            }
+        });
+
+        startLatch.countDown();
+
+        doneLatch.await();
+
+        log.info("rank5ProductIds: {}", rank5ProductIds);
+
+        Assertions.assertThat(rank5ProductIds)
+                .as("동시성 테스트 결과: 조회된 TOP5 상품ID %s (취소 상품ID: %d)", rank5ProductIds, cancelProductId)
+                .contains(cancelProductId);
+    }
+
+    @Test
+    @DisplayName("Redis에 캐시가 있으면 데이터를 정상 조회한다")
+    void retrieveRankSnapshot_success() {
+        List<ProductSalesResult> result = productService.retrieveRankSnapshot(null); // category = null → "ALL"
+
+        Assertions.assertThat(result).hasSize(5);
+        Assertions.assertThat(result.get(0).category()).isNotEmpty();
+    }
+
+    @Test
+    void checkRedisTemplateSame() {
+        System.out.println("Scheduler RedisTemplate: " + productRankScheduler.getRedisTemplate());
+        System.out.println("Service RedisTemplate: " + productService.getRedisTemplate());
+
+        assertEquals(productRankScheduler.getRedisTemplate(), productService.getRedisTemplate());
+    }
+
+    @BeforeAll
+    void setUpAll() {
+        productRankScheduler.updateProductRankSnapshot();
     }
 
 }
