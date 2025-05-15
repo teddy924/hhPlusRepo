@@ -2,6 +2,7 @@ package kr.hhplus.be.server.interfaces.coupon;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.application.coupon.CouponFirstComeService;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.application.coupon.CouponService;
 import kr.hhplus.be.server.common.ResponseApi;
@@ -22,6 +23,7 @@ import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 public class CouponController {
 
     private final CouponService couponService;
+    private final CouponFirstComeService couponFirstComeService;
 
     @GetMapping
     @SwaggerSuccess(responseType = CouponResponseDTO.class)
@@ -63,7 +65,10 @@ public class CouponController {
     @PostMapping("/FirstComeIssueCoupon")
     @SwaggerSuccess(responseType = ResponseApi.class)
     @SwaggerError({
-
+            NOT_EXIST_COUPON,
+            DUPLICATE_ISSUE_COUPON,
+            DUPLICATE_TRY_ISSUE,
+            COUPON_SOLD_OUT
     })
     @Operation(summary = "선착순 쿠폰 발급", description = "한정 수량 쿠폰을 선착순으로 지급한다.")
     public ResponseEntity<ResponseApi<String>> firstComeIssueCoupon(
@@ -71,7 +76,7 @@ public class CouponController {
     ) {
         CouponIssueCommand couponIssueCommand = couponIssueRequestDTO.toCommand();
 
-        couponService.issueCouponFirstCome(couponIssueCommand);
+        couponFirstComeService.issueCouponFirstCome(couponIssueCommand);
 
         return ResponseEntity.ok(new ResponseApi<>("쿠폰 발급 성공"));
     }
