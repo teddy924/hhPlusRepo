@@ -7,12 +7,14 @@ import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 
 import static kr.hhplus.be.server.domain.coupon.CouponDiscountType.RATE;
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("test")
 class CouponIssueUnitTest {
 
     @Test

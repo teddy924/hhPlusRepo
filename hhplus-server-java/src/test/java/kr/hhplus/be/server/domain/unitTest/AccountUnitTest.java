@@ -4,9 +4,11 @@ import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("test")
 class AccountUnitTest {
 
     @Test
