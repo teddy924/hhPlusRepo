@@ -2,10 +2,7 @@ package kr.hhplus.be.server.application.integrationTest;
 
 import kr.hhplus.be.server.application.order.OrderCancelCommand;
 import kr.hhplus.be.server.application.order.OrderFacade;
-import kr.hhplus.be.server.application.product.ProductRankScheduler;
-import kr.hhplus.be.server.application.product.ProductResult;
-import kr.hhplus.be.server.application.product.ProductSalesResult;
-import kr.hhplus.be.server.application.product.ProductService;
+import kr.hhplus.be.server.application.product.*;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.EmbeddedRedisConfig;
 import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
@@ -244,6 +241,23 @@ class ProductServiceIntegrationTest {
         System.out.println("Service RedisTemplate: " + productService.getRedisTemplate());
 
         assertEquals(productRankScheduler.getRedisTemplate(), productService.getRedisTemplate());
+    }
+
+    @Test
+    @DisplayName("실시간 랭킹 조회 성공 - ZSet 기준")
+    void getRealTimeRank_success() {
+        String redisKey = "zset:rank:TENT";
+        redisTemplate.delete(redisKey);
+        redisTemplate.opsForZSet().add(redisKey, "201", 45);
+        redisTemplate.opsForZSet().add(redisKey, "202", 100);
+        redisTemplate.opsForZSet().add(redisKey, "203", 80);
+
+        List<ProductRankResult> rankList = productService.getRealTimeRank("TENT");
+
+        Assertions.assertThat(rankList).hasSize(3);
+        Assertions.assertThat(rankList.get(0).productId()).isEqualTo(202L);
+        Assertions.assertThat(rankList.get(1).productId()).isEqualTo(203L);
+        Assertions.assertThat(rankList.get(2).productId()).isEqualTo(201L);
     }
 
     @BeforeAll

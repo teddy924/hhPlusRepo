@@ -2,6 +2,7 @@ package kr.hhplus.be.server.interfaces.product;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.application.product.ProductRankResult;
 import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.application.product.ProductSalesResult;
 import kr.hhplus.be.server.application.product.ProductService;
@@ -70,5 +71,18 @@ public class ProductController {
 
         return ResponseEntity.ok(new ResponseApi<>(true, "상위 상품 목록 조회 성공", resultList.stream().map(ProductResponseDTO::from).toList()));
 
+    }
+
+    @GetMapping("/realRank")
+    @SwaggerSuccess(responseType = ProductRankResponseDTO.class)
+    @SwaggerError({
+
+    })
+    public ResponseEntity<ResponseApi<List<ProductRankResponseDTO>>> realRank(
+            @RequestParam(value = "category", required = false) String category
+    ) {
+        List<ProductRankResult> resultList = productService.getRealTimeRank(category);
+
+        return ResponseEntity.ok(new ResponseApi<>(true, "실시간 상품 랭킹 조회 성공", resultList.stream().map(ProductRankResponseDTO::from).toList()));
     }
 }
