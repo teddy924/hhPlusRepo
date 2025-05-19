@@ -182,4 +182,8 @@ public class ProductService {
         throw new IllegalArgumentException("Unexpected type in ZSet value: " + value.getClass());
     }
 
+    public List<Product> getProductByCategory(ProductCategoryType category) {
+        return productRepository.getByCategory(category);
+    }
+
 }

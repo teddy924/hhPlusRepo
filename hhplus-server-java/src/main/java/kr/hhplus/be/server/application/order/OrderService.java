@@ -165,4 +165,13 @@ public class OrderService {
                 .toList();
     }
 
+    public List<OrderItem> getOrderItemsBetween(LocalDateTime start, LocalDateTime end) {
+        // 1. 일자 범위에 해당하는 주문 조회
+        List<Order> orders = orderRepository.getBySysCretDtBetween(start, end);
+        // 2. 해당 주문 아이디 추출
+        List<Long> orderIds = orders.stream().map(Order::getId).toList();
+        // 3. 주문 아이디의 상품정보 추출
+        return orderItemRepository.getByOrderIds(orderIds);
+    }
+
 }
