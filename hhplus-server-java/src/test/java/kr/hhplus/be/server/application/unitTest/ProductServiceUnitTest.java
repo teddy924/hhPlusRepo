@@ -2,6 +2,7 @@ package kr.hhplus.be.server.application.unitTest;
 
 import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.application.product.ProductService;
+import kr.hhplus.be.server.application.product.RankingRedisSortedSetService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.config.swagger.ErrorCode;
@@ -14,9 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +29,7 @@ import static kr.hhplus.be.server.domain.product.ProductCategoryType.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class ProductServiceUnitTest {
 
@@ -43,6 +47,9 @@ class ProductServiceUnitTest {
 
     @Mock
     private RedisSlaveSelector redisSlaveSelector;
+
+    @Mock
+    private RankingRedisSortedSetService rankingService;
 
     @Test
     @DisplayName("카테고리 없이 전체 상품 조회 성공")
@@ -127,6 +134,22 @@ class ProductServiceUnitTest {
 
         assertTrue(result.containsKey(product));
         verify(product).validSalesAvailability();
+    }
+
+    @Test
+    @DisplayName("캐시가 존재하지 않으면 예외가 발생한다")
+    void retrieveRankSnapshot_fail_whenNoCache() {
+        // given
+        String category = "TENT";
+        String redisKey = "snapshot:rank:TENT";
+
+        Mockito.when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        Mockito.when(valueOps.get(redisKey)).thenReturn(null);
+
+        // expect
+        assertThrows(IllegalStateException.class, () ->
+                productService.retrieveRankSnapshot(category)
+        );
     }
 
     @BeforeEach

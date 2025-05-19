@@ -6,11 +6,9 @@ import kr.hhplus.be.server.domain.order.OrderRepository;
 import kr.hhplus.be.server.domain.order.entity.Order;
 import kr.hhplus.be.server.domain.order.entity.OrderItem;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
-import kr.hhplus.be.server.domain.product.ProductRankSnapshotRepository;
 import kr.hhplus.be.server.domain.product.ProductRankingPolicy;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
-import kr.hhplus.be.server.domain.product.entity.ProductRankSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +30,6 @@ public class ProductFacade {
 
     private final ProductRankingPolicy productRankingPolicy;
     private final ProductRepository productRepository;
-    private final ProductRankSnapshotRepository productRankSnapshotRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
@@ -77,29 +74,5 @@ public class ProductFacade {
                 })
                 .toList();
     }
-
-    @Transactional(readOnly = true)
-    public List<ProductSalesResult> retrieveRankSnapshot(String category) {
-        log.debug("retrieveRankSnapshot category: {}", category);
-
-        String categoryKey = (category == null) ? "ALL" : category.toUpperCase();
-
-        log.debug("categoryKey: {}", categoryKey);
-
-        LocalDateTime lastSnapshot = productRankSnapshotRepository.getLatestSnapshotAt(categoryKey);
-
-        log.debug("last snapshot: {}", lastSnapshot);
-
-        List<ProductRankSnapshot> snapshots = productRankSnapshotRepository.getByCategoryAndSnapshotAtOrderByRankingAsc(categoryKey, lastSnapshot);
-
-        for (ProductRankSnapshot snapshot : snapshots) {
-            log.debug("snapshot productId {}", snapshot.getProductId());
-        }
-
-        return snapshots.stream()
-                .map(ProductSalesResult::from)
-                .toList();
-    }
-
 
 }

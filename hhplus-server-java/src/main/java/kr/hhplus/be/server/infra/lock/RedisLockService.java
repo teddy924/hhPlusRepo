@@ -2,6 +2,7 @@ package kr.hhplus.be.server.infra.lock;
 
 import kr.hhplus.be.server.common.LockService;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.UUID;
 
+@Profile("test")
 @Service
 public class RedisLockService implements LockService {
 
@@ -41,14 +43,12 @@ public class RedisLockService implements LockService {
     /**
      * @param key 락 키
      * @param value tryLock()에서 반환된 UUID 값
-     * @return true면 정상 해제, false면 실패 또는 락 주인이 아님
      */
     @Override
-    public boolean unlock(String key, String value) {
+    public void unlock(String key, String value) {
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setScriptText(UNLOCK_SCRIPT);
         script.setResultType(Long.class);
-        Long result = redisTemplate.execute(script, Collections.singletonList(key), value);
-        return result == 1;
+        redisTemplate.execute(script, Collections.singletonList(key), value);
     }
 }
