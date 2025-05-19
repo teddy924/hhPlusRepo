@@ -68,7 +68,7 @@ class CouponServiceIntegrationTest {
         CouponIssueCommand command = new CouponIssueCommand(33L, 3L);
 
         CustomException ex = assertThrows(CustomException.class, () -> couponService.issueCoupon(command));
-        assertTrue(ex.getMessage().contains("이미 쿠폰을 받은 발급자 입니다."));
+        assertTrue(ex.getMessage().contains("이미 발급 받은 쿠폰입니다."));
     }
 
     @Test
@@ -146,7 +146,7 @@ class CouponServiceIntegrationTest {
         System.out.println("실제 발급된 쿠폰 수: " + issuedCount);
 
         // 기대: 실제 발급된 쿠폰 수 : 1
-        assertTrue(issuedCount == 1, "동시성 이슈가 발생하여 중복 발급이 됐는지 확인");
+        assertEquals(1, issuedCount, "동시성 이슈가 발생하여 중복 발급이 됐는지 확인");
     }
 
     @Test
@@ -178,7 +178,7 @@ class CouponServiceIntegrationTest {
         System.out.println("실제 발급된 수량: " + actualIssuedCount);
 
         // 기대: 동시성 문제 발생 시 수량이 5를 초과함 / 동시성 문제 해결 시 수량은 5
-        assertTrue(actualIssuedCount == 5, "동시성 이슈 해결 시 쿠폰 재고만큼 발급 됨.");
+        assertEquals(5, actualIssuedCount, "동시성 이슈 해결 시 쿠폰 재고만큼 발급 됨.");
     }
 
 }

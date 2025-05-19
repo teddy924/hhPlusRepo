@@ -246,7 +246,7 @@ class ProductServiceIntegrationTest {
     @Test
     @DisplayName("실시간 랭킹 조회 성공 - ZSet 기준")
     void getRealTimeRank_success() {
-        String redisKey = "zset:rank:TENT";
+        String redisKey = "rank:zset:TENT";
         redisTemplate.delete(redisKey);
         redisTemplate.opsForZSet().add(redisKey, "201", 45);
         redisTemplate.opsForZSet().add(redisKey, "202", 100);

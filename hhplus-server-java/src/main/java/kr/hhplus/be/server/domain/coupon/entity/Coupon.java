@@ -80,4 +80,9 @@ public class Coupon {
         }
     }
 
+    // remainQuantity는 동기화 전용으로만 갱신 허용
+    public void updateRemainQuantityFromRedis(int remainQuantity) {
+        this.remainQuantity = remainQuantity;
+    }
+
 }

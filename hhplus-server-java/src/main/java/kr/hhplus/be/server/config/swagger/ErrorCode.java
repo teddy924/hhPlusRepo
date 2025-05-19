@@ -40,11 +40,12 @@ public enum ErrorCode {
     NOT_EXIST_COUPON(BAD_REQUEST.value(),"C-5002","해당 쿠폰을 찾을 수 없습니다."),
     COUPON_SOLD_OUT(BAD_REQUEST.value(),"C-5003","해당 쿠폰 재고가 존재하지 않습니다."),
     INVALID_COUPON(BAD_REQUEST.value(),"C-5004","유효하지 않은 쿠폰입니다."),
-    DUPLICATE_ISSUE_COUPON(BAD_REQUEST.value(),"C-5005","이미 쿠폰을 받은 발급자 입니다."),
+    DUPLICATE_ISSUE_COUPON(BAD_REQUEST.value(),"C-5005","이미 발급 받은 쿠폰입니다."),
     ALREADY_USED_COUPON(BAD_REQUEST.value(),"C-5006","이미 사용된 쿠폰입니다."),
     INVALID_COUPON_RESTORE(BAD_REQUEST.value(),"C-5007","복구 대상 쿠폰이 아닙니다."),
     FAIL_USE_COUPON(BAD_REQUEST.value(),"C-5008","쿠폰 사용에 실패하였습니다."),
     FAIL_RESTORE_COUPON(BAD_REQUEST.value(),"C-5009","쿠폰 복구에 실패하였습니다."),
+    DUPLICATE_TRY_ISSUE(BAD_REQUEST.value(),"C-5009","중복된 쿠폰 발급 시도입니다."),
 
     // order,
     NOT_EXIST_ORDER(BAD_REQUEST.value(),"C-6001","해당 주문 정보를 찾을 수 없습니다."),

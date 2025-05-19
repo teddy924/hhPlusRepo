@@ -5,7 +5,6 @@ import kr.hhplus.be.server.domain.coupon.*;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,11 +13,16 @@ import java.util.List;
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Service
-@RequiredArgsConstructor
 public class CouponService {
 
     private final CouponRepository couponRepository;
     private final CouponIssueRepository couponIssueRepository;
+
+    public CouponService(CouponRepository couponRepository,
+                         CouponIssueRepository couponIssueRepository) {
+        this.couponRepository = couponRepository;
+        this.couponIssueRepository = couponIssueRepository;
+    }
 
     // 보유 쿠폰 목록 조회
     public List<CouponResponseDTO> retrieveCouponList(Long userId) {
@@ -100,7 +104,5 @@ public class CouponService {
             throw new CustomException(FAIL_RESTORE_COUPON);
         }
     }
-
-
 
 }
