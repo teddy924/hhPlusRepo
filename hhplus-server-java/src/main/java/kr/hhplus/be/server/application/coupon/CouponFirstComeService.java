@@ -14,6 +14,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
 @Slf4j
@@ -72,18 +75,33 @@ public class CouponFirstComeService {
         }
 
         // 쿠폰 수량 감소 (DB) - scheduler
-        couponStockScheduler.syncCouponStockToDB();
+//        couponStockScheduler.syncCouponStockToDB();
+        // @todo 스케쥴러 강제화 제거
+        // 스케쥴러로 인해 자동으로 돌아가고 있기 때문에 로직에서는 제거 필요
+        // 로직에서 선언할 경우 계획과 다르게 강제로 실행 됨.
 
         // 발급 이력 저장 (DB) - async
         saveCouponIssueAsnyc(command);
 
         // 발급 성공 기록
-        redisTemplate.opsForSet().add(issuedSetKey, userId.toString());     // 발급이력 set에 유저 add
+//        redisTemplate.opsForSet().add(issuedSetKey, userId.toString());     // 발급이력 set에 유저 add
+        // 🌟 refactoring - TTL 설정 - 쿠폰 유효성 검증
+        couponCacheIssuedUser(issuedSetKey, userId, coupon.getEfctFnsDt());
+
     }
 
     @Async
     public void saveCouponIssueAsnyc(CouponIssueCommand command) {
         CouponIssue issue = CouponIssue.create(command.toInfo());
         couponIssueRepository.save(issue);
+    }
+
+    public void couponCacheIssuedUser(String issuedSetKey, Long userId, LocalDateTime efctFnsDt) {
+        redisTemplate.opsForSet().add(issuedSetKey, userId.toString());     // 발급이력 set에 유저 add
+
+        Duration ttl = Duration.between(LocalDateTime.now(), efctFnsDt);    // 현재 시각과 쿠폰종료시각의 차이를 계산
+        if (!ttl.isNegative()) {                                            // 음수 : 이미 쿠폰 만료 | 양수 : ttl이 남은 기간
+            redisTemplate.expire(issuedSetKey, ttl);                        // 남은 기간 뒤에 자동으로 cache 삭제
+        }
     }
 }
