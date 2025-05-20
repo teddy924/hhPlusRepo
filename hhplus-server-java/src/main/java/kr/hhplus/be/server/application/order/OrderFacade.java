@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.order;
 
+import kr.hhplus.be.server.application.externalPlatform.OrderExternalCommand;
 import kr.hhplus.be.server.application.product.ProductLockService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountInfo;
@@ -25,6 +26,7 @@ import kr.hhplus.be.server.interfaces.payment.PaymentDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +51,7 @@ public class OrderFacade {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     // 주문 + 결제
     @Transactional      // 	상태 변경 많고 실패 시 전체 롤백 필요
@@ -120,6 +123,9 @@ public class OrderFacade {
             if (couponInfo != null) {
                 couponService.useCoupon(couponInfo);
             }
+
+            // 이벤트 처리 - 주문 외부 플랫폼 전송
+            applicationEventPublisher.publishEvent(new OrderExternalCommand(order.getId(), order.getOrderStatus()));
 
             return OrderResult.builder().orderId(order.getId()).build();
         } catch (Exception e) {

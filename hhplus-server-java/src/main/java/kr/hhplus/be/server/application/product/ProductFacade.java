@@ -78,11 +78,11 @@ public class ProductFacade {
         List<OrderItem> orderItemList = orderService.getOrderItemsBetween(start, end);
         List<Product> productList = productService.getProductByCategory(parsedCategory);
 
-        return aggregate(orderItemList, productList, category);
+        return aggregateRank(orderItemList, productList, category);
 
     }
 
-    private List<ProductSalesResult> aggregate(List<OrderItem> orderItemList, List<Product> productList, String category ) {
+    private List<ProductSalesResult> aggregateRank(List<OrderItem> orderItemList, List<Product> productList, String category ) {
          // 상품아이디 별 상품 추출
         Map<Long, Product> productMap = productList.stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
