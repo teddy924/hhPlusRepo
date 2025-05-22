@@ -1,6 +1,5 @@
-package kr.hhplus.be.server.application.order;
+package kr.hhplus.be.server.application.externalPlatform;
 
-import kr.hhplus.be.server.application.externalPlatform.OrderExternalCommand;
 import kr.hhplus.be.server.infra.external.ExternalClient;
 import kr.hhplus.be.server.infra.external.ExternalRequest;
 import lombok.RequiredArgsConstructor;
