@@ -206,6 +206,9 @@ public class OrderFacade {
             if (orderSaveInfo.orderCoupon() != null) {
                 couponService.restoreCoupon(order.getUser().getId(), orderSaveInfo.orderCoupon().getCouponIssueId());
             }
+
+            // 이벤트 처리 - 주문 외부 플랫폼 전송
+            applicationEventPublisher.publishEvent(new OrderExternalCommand(order.getId(), order.getOrderStatus()));
         }
         catch (Exception e) {
             // 재고 복구
