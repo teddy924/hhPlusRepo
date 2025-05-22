@@ -6,10 +6,8 @@ import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRankSnapshotRepository;
 import kr.hhplus.be.server.domain.product.entity.ProductRankSnapshot;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.redisson.api.RedissonClient;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,20 +20,18 @@ import java.util.List;
 @Slf4j
 @Component
 public class ProductRankScheduler {
-
     private final ProductFacade productFacade;
     private final ProductRankSnapshotRepository productRankSnapshotRepository;
-    @Getter
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedissonClient redissonClient;
     private final ObjectMapper objectMapper;
 
     public ProductRankScheduler(ProductFacade productFacade,
                                 ProductRankSnapshotRepository productRankSnapshotRepository,
-                                @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate,
+                                RedissonClient redissonClient,
                                 ObjectMapper objectMapper) {
         this.productFacade = productFacade;
         this.productRankSnapshotRepository = productRankSnapshotRepository;
-        this.redisTemplate = redisTemplate;
+        this.redissonClient = redissonClient;
         this.objectMapper = objectMapper;
     }
 
@@ -46,8 +42,8 @@ public class ProductRankScheduler {
 
         // 1. 카테고리 목록 추출
         List<String> categories = new ArrayList<>(Arrays.stream(ProductCategoryType.values())
-                                .map(Enum::name)
-                                .toList());
+                .map(Enum::name)
+                .toList());
         categories.add("ALL");
 
         for (String category : categories) {
@@ -65,11 +61,11 @@ public class ProductRankScheduler {
                 );
             }
 
-            // Redis 캐시 저장
+            // 5. Redis 캐시 저장 (Redisson)
             try {
                 String key = CacheKey.ranking(category);
                 String json = objectMapper.writeValueAsString(rankList);
-                redisTemplate.opsForValue().set(key, json);
+                redissonClient.<String>getBucket(key).set(json);
                 log.info("update cacheKey: {}", key);
                 log.info("update rank: {}", json);
             } catch (JsonProcessingException e) {
@@ -79,5 +75,4 @@ public class ProductRankScheduler {
 
         log.info("상품 랭킹 스냅샷 집계 완료 (시각: {})", snapshotAt);
     }
-
 }

@@ -5,7 +5,6 @@ import kr.hhplus.be.server.application.account.AccountResult;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.EmbeddedRedisConfig;
-import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
@@ -14,13 +13,13 @@ import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -47,11 +46,7 @@ class AccountServiceIntegrationTest {
     private AccountHistRepository accountHistRepository;
 
     @Autowired
-    @Qualifier("masterRedisTemplate")
-    RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    RedisSlaveSelector redisSlaveSelector;
+    RedissonClient redissonClient;
 
     @Test
     @DisplayName("잔액 충전 시 잔액이 증가해야 한다")
@@ -170,15 +165,15 @@ class AccountServiceIntegrationTest {
         String cacheKey = "account:" + userId;
 
         // 1. 캐시 삭제 (보장)
-        redisTemplate.delete(cacheKey);
+        redissonClient.getBucket(cacheKey).delete();
 
         // 2. 조회하여 캐시 저장
         AccountResult result = accountService.retrieveAccount(userId);
         assertNotNull(result);
 
         // 3. Redis 캐시에 값이 존재하는지 확인
-        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
-        Object cached = slaveRedis.opsForValue().get(cacheKey);
+        RBucket<AccountResult> bucket = redissonClient.getBucket(cacheKey);
+        AccountResult cached = bucket.get();
 
         assertNotNull(cached);
         log.debug("Retrieved from cache: {}, class: {}", cached, cached.getClass());

@@ -4,7 +4,6 @@ import kr.hhplus.be.server.application.product.ProductResult;
 import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.application.product.RankingRedisSortedSetService;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.product.ProductCategoryType;
 import kr.hhplus.be.server.domain.product.ProductRepository;
@@ -15,10 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
@@ -40,16 +38,18 @@ class ProductServiceUnitTest {
     private ProductRepository productRepository;
 
     @Mock
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Mock
-    private ValueOperations<String, Object> valueOps;
-
-    @Mock
-    private RedisSlaveSelector redisSlaveSelector;
-
-    @Mock
     private RankingRedisSortedSetService rankingService;
+
+    @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private RBucket<Object> rBucket;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(redissonClient.getBucket(anyString())).thenReturn(rBucket);
+    }
 
     @Test
     @DisplayName("카테고리 없이 전체 상품 조회 성공")
@@ -143,21 +143,14 @@ class ProductServiceUnitTest {
         String category = "TENT";
         String redisKey = "snapshot:rank:TENT";
 
-        Mockito.when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        Mockito.when(valueOps.get(redisKey)).thenReturn(null);
+        // RedissonClient에서 getBucket 호출 시 mock RBucket 반환
+        when(redissonClient.getBucket(redisKey)).thenReturn(rBucket);
+        // RBucket에서 get() 호출 시 null 반환
+        when(rBucket.get()).thenReturn(null);
 
         // expect
         assertThrows(IllegalStateException.class, () ->
                 productService.retrieveRankSnapshot(category)
         );
-    }
-
-    @BeforeEach
-    void setUp() {
-        // Redis 관련 객체들 Mocking 후 미호출 시 Unnecessary stubbings 해결을 위해 lenient() 사용
-        // RedisTemplate stubbing
-        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        // RedisSlaveSelector stubbing
-        lenient().when(redisSlaveSelector.getRandomSlave()).thenReturn(redisTemplate);
     }
 }

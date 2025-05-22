@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.common;
 
 import kr.hhplus.be.server.common.exception.LockAcquireFailException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -10,7 +11,7 @@ public class DistributedLockExecutor {
 
     private final LockService lockService;
 
-    public DistributedLockExecutor(LockService lockService) {
+    public DistributedLockExecutor(@Qualifier("redissonLockService")LockService lockService) {
         this.lockService = lockService;
     }
 

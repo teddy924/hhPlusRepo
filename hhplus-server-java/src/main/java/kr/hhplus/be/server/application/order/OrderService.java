@@ -42,12 +42,6 @@ public class OrderService {
     }
 
     public Order saveInitialOrder(User user, OrderInfo orderInfo) {
-//        Order order = Order.builder()
-//                .user(user)
-//                .totalAmount(orderInfo.totPrice())
-//                .orderStatus(OrderStatus.CREATED)
-//                .build();
-
         Order order = initialOrder(user, orderInfo.totPrice());
 
         Long orderId = orderRepository.saveAndReturnId(order);
@@ -55,7 +49,6 @@ public class OrderService {
     }
 
     public Order buildOrder(Order order, OrderStatus orderStatus) {
-
         return Order.builder()
                 .id(order.getId())
                 .user(order.getUser())
@@ -67,7 +60,6 @@ public class OrderService {
     }
 
     public OrderAddress buildOrderAddress(Order order, OrderAddressInfo orderAddressInfo) {
-
         return OrderAddress.builder()
                 .order(order)
                 .receiverName(orderAddressInfo.receiverName())
@@ -78,11 +70,9 @@ public class OrderService {
                 .memo(orderAddressInfo.memo())
                 .sysCretDt(LocalDateTime.now())
                 .build();
-
     }
 
     public List<OrderItem> buildOrderItemList(Order order, Map<Product, Integer> orderProductMap) {
-
         List<OrderItem> orderItemList = new ArrayList<>(
                 orderProductMap.entrySet().stream()
                 .map(entry -> {
@@ -104,7 +94,6 @@ public class OrderService {
     }
 
     public OrderCoupon buildOrderCoupon(CouponInfo couponInfo, Order order, Long totProductPrice) {
-
         return OrderCoupon.builder()
                 .order(order)
                 .couponIssueId(couponInfo.couponIssue().getId())
@@ -112,17 +101,14 @@ public class OrderService {
                 .usedDt(LocalDateTime.now())
                 .sysCretDt(LocalDateTime.now())
                 .build();
-
     }
 
     public OrderHistory buildOrderHistory(Order order, OrderHistoryStatus status)  {
-
         return OrderHistory.builder()
                 .order(order)
                 .status(status)
                 .sysCretDt(LocalDateTime.now())
                 .build();
-
     }
 
     public void saveOrderRelated(OrderSaveInfo orderSaveInfo) {
@@ -141,7 +127,6 @@ public class OrderService {
                 .orderCoupon(orderCouponRepository.getByOrderId(orderId))
                 .orderHistory(orderHistoryRepository.getByOrderId(orderId))
                 .build();
-
     }
 
     public List<OrderResponseDTO> retrieveOrdersByUserId(Long userId) {

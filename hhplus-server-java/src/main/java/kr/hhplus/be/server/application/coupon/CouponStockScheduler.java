@@ -4,8 +4,9 @@ import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.domain.coupon.CouponRepository;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.redisson.api.RScoredSortedSet;
+import org.redisson.api.RSet;
+import org.redisson.api.RedissonClient;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,42 +18,49 @@ import java.util.Set;
 @Component
 public class CouponStockScheduler {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedissonClient redissonClient;
     private final CouponRepository couponRepository;
 
-    public CouponStockScheduler(@Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate,
+    public CouponStockScheduler(RedissonClient redissonClient,
                                 CouponRepository couponRepository
     ) {
-        this.redisTemplate = redisTemplate;
+        this.redissonClient = redissonClient;
         this.couponRepository = couponRepository;
     }
 
     @Scheduled(fixedRate = 60000)
     public void syncCouponStockToDB() {
-        Set<String> keys = redisTemplate.keys(CacheKey.getCouponStockZsetKeyPattern());       //  redis에서 쿠폰 재고 키 패턴을 통해 키 추출
+        // 1. 활성 쿠폰 ID 리스트 조회
+        RSet<String> activeCouponIdSet = redissonClient.getSet(CacheKey.activeCouponIds());
+        Set<String> idStrings = activeCouponIdSet.readAll();
 
-        if (keys.isEmpty()) {
+        if (idStrings.isEmpty()) {
+            log.info("[CouponScheduler] 동기화 대상 쿠폰 없음.");
             return;
         }
-        List<Long> couponIds = keys.stream()
-                .map(key -> key.replace(CacheKey.getCouponStockZsetKeyPrefix() + ":", ""))      // 쿠폰id 추출을 위해 key prefix 제거
+
+        // 2. 쿠폰 ID 문자열 → Long 변환
+        List<Long> couponIds = idStrings.stream()
                 .map(Long::valueOf)
                 .toList();
 
+        // 3. DB에서 쿠폰 엔티티 조회
         List<Coupon> couponList = couponRepository.getByCouponIds(couponIds);
 
+        int updated = 0;
         for (Coupon coupon : couponList) {
             String stockKey = CacheKey.stock(coupon.getId());
+            RScoredSortedSet<String> stockSet = redissonClient.getScoredSortedSet(stockKey);
 
-            Long issuedCount = redisTemplate.opsForZSet().zCard(stockKey); // 발급 수
-            if (issuedCount == null) issuedCount = 0L;
+            int issuedCount = stockSet.size();
+            int remain = coupon.getLimitQuantity() - issuedCount;
 
-            int remain = coupon.getLimitQuantity() - issuedCount.intValue();
             coupon.updateRemainQuantityFromRedis(remain);
-
             couponRepository.save(coupon);
+            updated++;
         }
 
+        log.info("[CouponScheduler] {}개 쿠폰 재고 DB 동기화 완료", updated);
     }
 
 }
