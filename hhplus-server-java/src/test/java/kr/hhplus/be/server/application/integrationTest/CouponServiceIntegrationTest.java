@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.integrationTest;
 
 import kr.hhplus.be.server.application.coupon.CouponService;
+import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
@@ -8,8 +9,11 @@ import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.CouponStatus;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -27,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @Testcontainers
 @SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Transactional
 class CouponServiceIntegrationTest {
 
@@ -34,6 +39,21 @@ class CouponServiceIntegrationTest {
     private CouponService couponService;
     @Autowired
     private CouponIssueRepository couponIssueRepository;
+    @Autowired
+    private RedissonClient redissonClient;
+
+    @BeforeAll
+    void beforeAll() {
+        Long couponId1 = 4L;
+        Long couponId2 = 9L;
+        Long couponId3 = 700001L;
+        redissonClient.getScoredSortedSet(CacheKey.stock(couponId1)).clear();
+        redissonClient.getSet(CacheKey.issuedSet(couponId1)).clear();
+        redissonClient.getScoredSortedSet(CacheKey.stock(couponId2)).clear();
+        redissonClient.getSet(CacheKey.issuedSet(couponId2)).clear();
+        redissonClient.getScoredSortedSet(CacheKey.stock(couponId3)).clear();
+        redissonClient.getSet(CacheKey.issuedSet(couponId3)).clear();
+    }
 
     @Test
     @DisplayName("쿠폰 목록 조회 - 보유한 쿠폰이 있을 경우 정상 조회")
@@ -57,7 +77,7 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("쿠폰 발급 성공 - 쿠폰 수량 차감 + 이력 생성")
     void issueCoupon_shouldSucceed_whenValid() {
-        CouponIssueCommand command = new CouponIssueCommand(32L, 1L);
+        CouponIssueCommand command = new CouponIssueCommand(32L, 4L);
 
         assertDoesNotThrow(() -> couponService.issueCoupon(command));
     }
@@ -65,7 +85,7 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("쿠폰 발급 실패 - 이미 발급받은 쿠폰")
     void issueCoupon_shouldThrow_whenAlreadyIssued() {
-        CouponIssueCommand command = new CouponIssueCommand(33L, 3L);
+        CouponIssueCommand command = new CouponIssueCommand(32L, 4L);
 
         CustomException ex = assertThrows(CustomException.class, () -> couponService.issueCoupon(command));
         assertTrue(ex.getMessage().contains("이미 발급 받은 쿠폰입니다."));
@@ -117,7 +137,7 @@ class CouponServiceIntegrationTest {
     void concurrentCouponIssue_asIs_shouldCauseDuplicateIssue() throws InterruptedException {
         int threadCount = 10;
         Long userId = 5L;
-        Long couponId = 4L;
+        Long couponId = 9L;
 
         // 동시 요청을 위한 쓰레드풀 + 래치
         ExecutorService executorService = Executors.newFixedThreadPool(5);

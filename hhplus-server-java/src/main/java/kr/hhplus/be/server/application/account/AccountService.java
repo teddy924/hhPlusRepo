@@ -1,7 +1,6 @@
 package kr.hhplus.be.server.application.account;
 
 import kr.hhplus.be.server.common.CacheKey;
-import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
@@ -9,9 +8,9 @@ import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import kr.hhplus.be.server.domain.account.entity.AccountHistory;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,20 +25,17 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccountHistRepository accountHistRepository;
-    private final RedisSlaveSelector redisSlaveSelector;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedissonClient redissonClient;
 
     @Autowired
     public AccountService(
-            AccountRepository accountRepository
-            , AccountHistRepository accountHistRepository
-            , RedisSlaveSelector redisSlaveSelector
-            , @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> redisTemplate
+            AccountRepository accountRepository,
+            AccountHistRepository accountHistRepository,
+            RedissonClient redissonClient
     ) {
         this.accountRepository = accountRepository;
         this.accountHistRepository = accountHistRepository;
-        this.redisSlaveSelector = redisSlaveSelector;
-        this.redisTemplate = redisTemplate;
+        this.redissonClient = redissonClient;
     }
 
     // 잔액 충전
@@ -55,14 +51,12 @@ public class AccountService {
         saveHist(info, AccountHistType.CHARGE);
 
         String cacheKey = CacheKey.account(info.userId());
-        redisTemplate.opsForValue().set(
-                cacheKey,
-                AccountResult.builder()
-                        .userId(info.userId())
-                        .balance(account.getBalance())
-                        .build()
-        );
-
+        redissonClient.<AccountResult>getBucket(cacheKey)
+                        .set(AccountResult.builder()
+                                .userId(info.userId())
+                                .balance(account.getBalance())
+                                .build()
+                        );
     }
 
     // 잔액 사용
@@ -80,39 +74,36 @@ public class AccountService {
         saveHist(info, AccountHistType.USE);
 
         String cacheKey = CacheKey.account(info.userId());
-        redisTemplate.opsForValue().set(
-                cacheKey,
-                AccountResult.builder()
+        redissonClient.<AccountResult>getBucket(cacheKey)
+                .set(AccountResult.builder()
                         .userId(info.userId())
                         .balance(account.getBalance())
                         .build()
-        );
+                );
 
     }
 
     @Transactional(readOnly = true)
     public AccountResult retrieveAccount(Long userId) throws Exception {
-        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
 
         String cacheKey = CacheKey.account(userId);
+        RBucket<AccountResult> bucket = redissonClient.getBucket(cacheKey);
 
-        // 조회
-        Object cached = slaveRedis.opsForValue().get(cacheKey);
-        if (cached != null && cached instanceof AccountResult) {
-            return (AccountResult) cached;
+        AccountResult cached = bucket.get();
+        if (cached != null) {
+            return cached;
         }
 
         // 캐시에 없으면 DB 조회
         Account account = accountRepository.findByUserId(userId);
 
-        // 조회 후 마스터 Redis에 캐시 저장
-        redisTemplate.opsForValue().set(
-                cacheKey,
-                AccountResult.builder()
-                        .userId(userId)
-                        .balance(account.getBalance())
-                        .build()
-        );
+        AccountResult accountResult = AccountResult.builder()
+                .userId(userId)
+                .balance(account.getBalance())
+                .build();
+
+        // 조회 후 캐시 저장
+        redissonClient.getBucket(cacheKey).set(accountResult);
 
         return new AccountResult(account.getUser().getId(), account.getBalance());
     }

@@ -1,37 +1,38 @@
 package kr.hhplus.be.server.application.product;
 
 import kr.hhplus.be.server.common.CacheKey;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
+import lombok.RequiredArgsConstructor;
+import org.redisson.api.RScoredSortedSet;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.protocol.ScoredEntry;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static kr.hhplus.be.server.domain.product.ProductRankingPolicy.TOP_COUNT;
 
 @Service
+@RequiredArgsConstructor
 public class RankingRedisSortedSetService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-
-    public RankingRedisSortedSetService(@Qualifier("masterRedisTemplate")RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
+    private final RedissonClient redissonClient;
 
     public void increaseSales(String category, Long productId, int quantity) {
         String key = CacheKey.category(category);
-        redisTemplate.opsForZSet().incrementScore(key, productId.toString(), quantity);
+        RScoredSortedSet<Long> sortedSet = redissonClient.getScoredSortedSet(key);
+        sortedSet.addScore(productId, quantity);
     }
 
     public void decreaseSales(String category, Long productId, int quantity) {
         String key = CacheKey.category(category);
-        redisTemplate.opsForZSet().incrementScore(key, productId.toString(), -quantity);
+        RScoredSortedSet<Long> sortedSet = redissonClient.getScoredSortedSet(key);
+        sortedSet.addScore(productId, -quantity);
     }
 
-    public Set<ZSetOperations.TypedTuple<Object>> getRank(String category) {
+    public Set<ScoredEntry<Long>> getRank(String category) {
         String key = CacheKey.category(category);
-        return redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, (TOP_COUNT * 2) - 1);
+        RScoredSortedSet<Long> sortedSet = redissonClient.getScoredSortedSet(key);
+        return new LinkedHashSet<>(sortedSet.entryRangeReversed(0, TOP_COUNT * 2 - 1));
     }
-
 }

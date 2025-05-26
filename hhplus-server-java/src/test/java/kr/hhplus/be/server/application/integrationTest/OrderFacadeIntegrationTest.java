@@ -206,7 +206,7 @@ class OrderFacadeIntegrationTest {
     }
 
     @Test
-    @DisplayName("동일 상품 주문 두 건 동시 주문시 재고 복구 동시성 테스트")
+    @DisplayName("동일 상품 주문 두 건 동시 주문시 재고 차감 동시성 테스트")
     void concurrentOrder_shouldDecreaseStockExactlyOncePerOrder() throws Exception {
         Long productId = 80L;
         int orderQuantity = 1;

@@ -2,9 +2,9 @@ package kr.hhplus.be.server.infra.lock;
 
 import kr.hhplus.be.server.common.LockService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -13,8 +13,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-@Profile("!test")
-@Service
+@Slf4j
+@Service("redissonLockService")
 @RequiredArgsConstructor
 public class RedissonLockService implements LockService {
 
@@ -35,6 +35,7 @@ public class RedissonLockService implements LockService {
         try {
             success = lock.tryLock(0, timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            log.warn("Redisson 락 획득 중 인터럽트 발생 key={}", key);
             Thread.currentThread().interrupt();
             return null;
         }

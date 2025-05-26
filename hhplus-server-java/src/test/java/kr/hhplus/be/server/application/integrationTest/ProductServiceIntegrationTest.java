@@ -5,7 +5,6 @@ import kr.hhplus.be.server.application.order.OrderFacade;
 import kr.hhplus.be.server.application.product.*;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.EmbeddedRedisConfig;
-import kr.hhplus.be.server.config.redis.RedisSlaveSelector;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
 import org.assertj.core.api.Assertions;
@@ -13,13 +12,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.redisson.api.RBucket;
+import org.redisson.api.RScoredSortedSet;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Import(EmbeddedRedisConfig.class)
-class ProductServiceIntegrationTest {
+class  ProductServiceIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProductServiceIntegrationTest.class);
 
@@ -49,11 +49,7 @@ class ProductServiceIntegrationTest {
     ProductRepository productRepository;
 
     @Autowired
-    @Qualifier("masterRedisTemplate")
-    RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    RedisSlaveSelector redisSlaveSelector;
+    RedissonClient redissonClient;
 
     @Autowired
     ProductRankScheduler productRankScheduler;
@@ -166,16 +162,16 @@ class ProductServiceIntegrationTest {
         Long productId = 21L;
         String cacheKey = "product:" + productId;
 
-        redisTemplate.delete(cacheKey); // 캐시 제거
+        redissonClient.getBucket(cacheKey).delete();
 
         productService.retrieveDetail(productId); // 캐시 생성
 
-        RedisTemplate<String, Object> slaveRedis = redisSlaveSelector.getRandomSlave();
-        Object cached = slaveRedis.opsForValue().get(cacheKey);
+        RBucket<ProductResult> bucket = redissonClient.getBucket(cacheKey);
+        ProductResult cached = bucket.get();
 
         assertNotNull(cached, "슬레이브 캐시에 데이터가 있어야 함");
         assertInstanceOf(ProductResult.class, cached);
-        assertEquals(productId, ((ProductResult) cached).productId());
+        assertEquals(productId, cached.productId());
     }
 
     @Test
@@ -236,21 +232,16 @@ class ProductServiceIntegrationTest {
     }
 
     @Test
-    void checkRedisTemplateSame() {
-        System.out.println("Scheduler RedisTemplate: " + productRankScheduler.getRedisTemplate());
-        System.out.println("Service RedisTemplate: " + productService.getRedisTemplate());
-
-        assertEquals(productRankScheduler.getRedisTemplate(), productService.getRedisTemplate());
-    }
-
-    @Test
     @DisplayName("실시간 랭킹 조회 성공 - ZSet 기준")
     void getRealTimeRank_success() {
         String redisKey = "rank:zset:TENT";
-        redisTemplate.delete(redisKey);
-        redisTemplate.opsForZSet().add(redisKey, "201", 45);
-        redisTemplate.opsForZSet().add(redisKey, "202", 100);
-        redisTemplate.opsForZSet().add(redisKey, "203", 80);
+
+        RScoredSortedSet<Long> zset = redissonClient.getScoredSortedSet(redisKey);
+        zset.clear(); // 삭제
+
+        zset.add(45, 201L);
+        zset.add(100, 202L);
+        zset.add(80, 203L);
 
         List<ProductRankResult> rankList = productService.getRealTimeRank("TENT");
 

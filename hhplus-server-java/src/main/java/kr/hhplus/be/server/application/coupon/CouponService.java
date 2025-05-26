@@ -1,10 +1,13 @@
 package kr.hhplus.be.server.application.coupon;
 
+import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.coupon.*;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponseDTO;
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,16 +15,23 @@ import java.util.List;
 
 import static kr.hhplus.be.server.config.swagger.ErrorCode.*;
 
+@Slf4j
 @Service
 public class CouponService {
 
     private final CouponRepository couponRepository;
     private final CouponIssueRepository couponIssueRepository;
+    private final RedissonClient redissonClient;
+    private final CouponCacheManager couponCacheManager;
 
     public CouponService(CouponRepository couponRepository,
-                         CouponIssueRepository couponIssueRepository) {
+                         CouponIssueRepository couponIssueRepository,
+                         RedissonClient redissonClient,
+                         CouponCacheManager couponCacheManager) {
         this.couponRepository = couponRepository;
         this.couponIssueRepository = couponIssueRepository;
+        this.redissonClient = redissonClient;
+        this.couponCacheManager = couponCacheManager;
     }
 
     // 보유 쿠폰 목록 조회
@@ -43,24 +53,43 @@ public class CouponService {
     // 쿠폰 발급
     @Transactional
     public void issueCoupon(CouponIssueCommand couponIssueCommand) {
-        CouponIssueInfo issueInfo = couponIssueCommand.toInfo();
+        Long userId = couponIssueCommand.userId();
+        Long couponId = couponIssueCommand.couponId();
 
-        // 1. 쿠폰 유효성 확인
-        Coupon coupon = couponRepository.getById(issueInfo.couponId());
+        Coupon coupon = couponRepository.getById(couponId);
         coupon.expiredCoupon(); // 유효기간 확인
 
-        // 2. 중복 발급 확인 (CouponIssue 내부에서 책임지도록 위임)
-        List<CouponIssue> alreadyIssuedList = couponIssueRepository.getAllByUserId(issueInfo.userId());
-        issueInfo.addExistingIssues(alreadyIssuedList);
+        // redis key 선언
+        String stockKey = CacheKey.stock(couponId);
+        String issuedSetKey = CacheKey.issuedSet(couponId);
 
-        CouponIssue issue = CouponIssue.create(issueInfo);
+        log.info("stockKey:{}", stockKey);
+        log.info("issuedSetKey:{}", issuedSetKey);
 
-        // 3. 재고 차감
+        // 1. Redis 중복 발급 여부 확인
+        couponCacheManager.checkDuplicateIssue(issuedSetKey, userId);
+
+        // 2. Redis 선착순 구조에 추가 (선착순 아닌 일반 발급이라도 발급 수 추적용으로 활용)
+        couponCacheManager.tryAddToStock(stockKey, userId);
+
+        // 3. 재고 초과 확인
+        couponCacheManager.checkStockOverflow(stockKey, userId, coupon.getLimitQuantity());
+
+        // 4. DB 기준 실제 재고 검증
+        couponCacheManager.checkStockRemain(stockKey, userId, coupon.getRemainQuantity());
+
+        // 5. DB 재고 감소 및 이력 저장
         coupon.useOneQuantity();
         couponRepository.save(coupon);
+        // 쿠폰 발급 성공 시
+        couponCacheManager.registerCouponToActiveSet(couponId);
 
-        // 4. 발급 이력 저장
+        // 6. 쿠폰 발급 이력 저장
+        CouponIssue issue = CouponIssue.create(couponIssueCommand.toInfo());
         couponIssueRepository.save(issue);
+
+        // 7. 발급 이력 Redis에 기록 + TTL 설정
+        couponCacheManager.recordIssueSuccess(issuedSetKey, userId, coupon.getEfctFnsDt());
     }
 
     // 쿠폰 조회(쿠폰 정보, 이력)

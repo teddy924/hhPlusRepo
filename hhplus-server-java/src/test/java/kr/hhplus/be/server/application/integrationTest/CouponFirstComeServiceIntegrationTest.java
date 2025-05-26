@@ -5,11 +5,10 @@ import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.config.EmbeddedRedisConfig;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import org.junit.jupiter.api.*;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -25,14 +24,16 @@ public class CouponFirstComeServiceIntegrationTest {
     @Autowired
     CouponFirstComeService couponFirstComeService;
 
-    @Qualifier("masterRedisTemplate")
     @Autowired
-    RedisTemplate<String, Object> redisTemplate;
+    RedissonClient redissonClient;
+
+    String stockZsetKey = "coupon:stock:zset:9";
+    String issueSetKey = "coupon:issue:set:9";
 
     @BeforeAll
     void clearRedis() {
-        redisTemplate.delete("coupon:stock:zset:9");
-        redisTemplate.delete("coupon:issue:set:9");
+        redissonClient.getBucket(stockZsetKey).delete();
+        redissonClient.getBucket(issueSetKey).delete();
     }
 
     @Test
@@ -48,10 +49,10 @@ public class CouponFirstComeServiceIntegrationTest {
         couponFirstComeService.issueCouponFirstCome(command);
 
         // then
-        Boolean isMember = redisTemplate.opsForSet().isMember("coupon:issue:set:9", userId.toString());
+        Boolean isMember = redissonClient.getSet(issueSetKey).contains(userId.toString());
         assertEquals(Boolean.TRUE, isMember, "발급 이력에 사용자 포함");
 
-        Long rank = redisTemplate.opsForZSet().rank("coupon:stock:zset:9", userId.toString());
+        Integer rank = redissonClient.getScoredSortedSet(stockZsetKey).rank(userId.toString());
         assertNotNull(rank, "ZSet에 사용자 순위 존재");
     }
 
@@ -61,13 +62,14 @@ public class CouponFirstComeServiceIntegrationTest {
         // given
         Long userId = 1001L;
         Long couponId = 9L;
-        redisTemplate.opsForSet().add("coupon:issue:set:9", userId.toString());
+
+        redissonClient.getSet(issueSetKey).add(userId);
 
         CouponIssueCommand command = new CouponIssueCommand(userId, couponId);
 
         // expect
         CustomException ex = assertThrows(CustomException.class, () -> couponFirstComeService.issueCouponFirstCome(command));
-        assertEquals("중복된 쿠폰 발급 시도입니다.", ex.getMessage());
+        assertEquals("이미 발급 받은 쿠폰입니다.", ex.getMessage());
     }
 
     @Test
