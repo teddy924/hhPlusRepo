@@ -1,14 +1,21 @@
 package kr.hhplus.be.server.application.coupon;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.common.CacheKey;
+import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.CouponRepository;
 import kr.hhplus.be.server.domain.coupon.entity.Coupon;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
+import kr.hhplus.be.server.infra.outbox.OutboxEvent;
+import kr.hhplus.be.server.infra.outbox.OutboxService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +31,22 @@ public class CouponFirstComeService {
     private final CouponIssueRepository couponIssueRepository;
     private final RedissonClient redissonClient;
     private final CouponCacheManager couponCacheManager;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final OutboxService outboxService;
+    private final ObjectMapper objectMapper;
 
     public CouponFirstComeService(CouponRepository couponRepository,
                                   CouponIssueRepository couponIssueRepository,
                                   RedissonClient redissonClient,
-                                  CouponCacheManager couponCacheManager) {
+                                  CouponCacheManager couponCacheManager,
+                                  ApplicationEventPublisher applicationEventPublisher, OutboxService outboxService, ObjectMapper objectMapper) {
         this.couponRepository = couponRepository;
         this.couponIssueRepository = couponIssueRepository;
         this.redissonClient = redissonClient;
         this.couponCacheManager = couponCacheManager;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.outboxService = outboxService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -63,8 +77,19 @@ public class CouponFirstComeService {
         // 쿠폰 발급 성공 시
         couponCacheManager.registerCouponToActiveSet(couponId);
 
-        // 발급 이력 저장 (DB) - async
-        saveCouponIssueAsnyc(command);
+//        // 발급 이력 저장 (DB) - async
+//        saveCouponIssueAsnyc(command);
+
+        // 이벤트 처리 - 주문 외부 플랫폼 전송
+//        applicationEventPublisher.publishEvent(CouponIssueCommand.builder()
+//                .userId(userId)
+//                .couponId(couponId)
+//                .build());
+
+        saveCouponIssueKafka(CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build());
 
         // 🌟 refactoring - TTL 설정 - 쿠폰 유효성 검증
         couponCacheIssuedUser(issuedSetKey, userId, coupon.getEfctFnsDt());
@@ -83,6 +108,36 @@ public class CouponFirstComeService {
         Duration ttl = Duration.between(LocalDateTime.now(), efctFnsDt);        // 현재 시각과 쿠폰종료시각의 차이를 계산
         if (!ttl.isNegative()) {                                                // 음수 : 이미 쿠폰 만료 | 양수 : ttl이 남은 기간
             issuedSet.expire(ttl);                                              // 남은 기간 뒤에 자동으로 cache 삭제
+        }
+    }
+
+    public void saveCouponIssueKafka(CouponIssueCommand command) {
+        try {
+            // 1. ID 확보용 임시 저장
+            OutboxEvent tmp = outboxService.saveOutboxEvent(
+                    "COUPON",
+                    command.userId().toString(),
+                    "COUPON_ISSUED",
+                    "TEMP"
+            );
+
+            // 2. ID 포함된 실제 command 생성
+            CouponIssueCommand enriched = new CouponIssueCommand(
+                    command.userId(),
+                    command.couponId(),
+                    tmp.getId() // ID 주입
+            );
+
+            String payload = objectMapper.writeValueAsString(command);
+
+            outboxService.saveOutboxEvent(
+                    "COUPON",
+                    command.userId().toString(),
+                    "COUPON_ISSUED",
+                    payload
+            );
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.FAIL_SERIALIZATION);
         }
     }
 }
