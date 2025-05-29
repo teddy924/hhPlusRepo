@@ -2,7 +2,7 @@ package kr.hhplus.be.server.application.integrationTest;
 
 import kr.hhplus.be.server.application.coupon.CouponFirstComeService;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.config.EmbeddedRedisConfig;
+import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import org.junit.jupiter.api.*;
 import org.redisson.api.RedissonClient;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @Testcontainers
 @SpringBootTest
-@Import(EmbeddedRedisConfig.class)
+@Import(RedissonTestConfig.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CouponFirstComeServiceIntegrationTest {
 

@@ -4,7 +4,7 @@ import kr.hhplus.be.server.application.account.AccountHistResult;
 import kr.hhplus.be.server.application.account.AccountResult;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.config.EmbeddedRedisConfig;
+import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.domain.account.AccountHistRepository;
 import kr.hhplus.be.server.domain.account.AccountHistType;
 import kr.hhplus.be.server.domain.account.AccountInfo;
@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @Testcontainers
 @SpringBootTest
-@Import(EmbeddedRedisConfig.class)
+@Import(RedissonTestConfig.class)
 class AccountServiceIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AccountServiceIntegrationTest.class);

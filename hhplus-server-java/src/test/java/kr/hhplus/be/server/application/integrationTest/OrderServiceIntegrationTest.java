@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.integrationTest;
 
 import kr.hhplus.be.server.application.order.OrderService;
+import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.domain.order.OrderInfo;
 import kr.hhplus.be.server.domain.order.OrderSaveInfo;
 import kr.hhplus.be.server.domain.order.OrderStatus;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -22,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @Testcontainers
 @SpringBootTest
+@Import({RedissonTestConfig.class})
 class OrderServiceIntegrationTest {
 
     @Autowired
