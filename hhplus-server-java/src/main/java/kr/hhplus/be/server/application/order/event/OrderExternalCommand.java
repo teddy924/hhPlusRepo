@@ -6,6 +6,7 @@ import lombok.Builder;
 @Builder
 public record OrderExternalCommand(
         Long orderId,
-        OrderStatus status
+        OrderStatus status,
+        Long outboxEventId
 ) {
 }

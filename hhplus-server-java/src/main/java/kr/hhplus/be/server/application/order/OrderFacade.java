@@ -125,7 +125,10 @@ public class OrderFacade {
             }
 
             // 이벤트 처리 - 주문 외부 플랫폼 전송
-            applicationEventPublisher.publishEvent(new OrderExternalCommand(order.getId(), order.getOrderStatus()));
+            applicationEventPublisher.publishEvent(OrderExternalCommand.builder()
+                    .orderId(order.getId())
+                    .status(OrderStatus.CREATED)
+                    .build());
 
             return OrderResult.builder().orderId(order.getId()).build();
         } catch (Exception e) {
@@ -207,7 +210,10 @@ public class OrderFacade {
             }
 
             // 이벤트 처리 - 주문 외부 플랫폼 전송
-            applicationEventPublisher.publishEvent(new OrderExternalCommand(order.getId(), order.getOrderStatus()));
+            applicationEventPublisher.publishEvent(OrderExternalCommand.builder()
+                    .orderId(order.getId())
+                    .status(OrderStatus.CANCELED)
+                    .build());
         }
         catch (Exception e) {
             // 재고 복구
