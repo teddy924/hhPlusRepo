@@ -5,9 +5,9 @@ import kr.hhplus.be.server.config.KafkaProducerTestConfig;
 import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
 import kr.hhplus.be.server.domain.coupon.entity.CouponIssue;
-import kr.hhplus.be.server.infra.outbox.OutboxEvent;
-import kr.hhplus.be.server.infra.outbox.OutboxRepository;
-import kr.hhplus.be.server.infra.outbox.OutboxStatus;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -27,14 +28,16 @@ import org.springframework.kafka.listener.MessageListener;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ActiveProfiles("test")
@@ -48,9 +51,9 @@ public class CouponKafkaIntegrationTest {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
     @Autowired
-    private OutboxRepository outboxRepository;
-    @Autowired
     private CouponIssueRepository couponIssueRepository;
+    @Autowired
+    private KafkaAdmin kafkaAdmin;
 
     private static final String TOPIC = "coupon.FCIssued.v1";
 
@@ -109,4 +112,17 @@ public class CouponKafkaIntegrationTest {
         assertNotNull(histories, "쿠폰 발급 이력이 저장되어야 합니다");
     }
 
+    @Test
+    void verifyTopicPartitionCount() throws ExecutionException, InterruptedException {
+        try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+            DescribeTopicsResult result = adminClient.describeTopics(Collections.singletonList(TOPIC));
+            Map<String, TopicDescription> descriptions = result.all().get();
+
+            TopicDescription topicDescription = descriptions.get(TOPIC);
+            int partitionCount = topicDescription.partitions().size();
+
+            System.out.println("✔ 토픽 파티션 수: " + partitionCount);
+            assertEquals(3, partitionCount, "쿠폰 발급 이력 토픽의 파티션 슈는 3개입니다.");
+        }
+    }
 }

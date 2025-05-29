@@ -142,6 +142,7 @@ public class KafkaConsumerTestConfig {
         System.out.println("✅ factory 생성됨: couponIssueCommandKafkaListenerContainerFactory");
         log.info("✅ factory 생성됨: couponIssueCommandKafkaListenerContainerFactory");
         factory.setConsumerFactory(couponIssueCommandConsumerFactory());
+        factory.setConcurrency(3);
 
         // DLQ + Outbox insert-only 실패 처리 커스텀 recoverer
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
