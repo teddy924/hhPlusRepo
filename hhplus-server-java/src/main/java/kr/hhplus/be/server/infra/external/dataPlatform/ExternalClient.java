@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.infra.external;
+package kr.hhplus.be.server.infra.external.dataPlatform;
 
 import org.springframework.stereotype.Component;
 

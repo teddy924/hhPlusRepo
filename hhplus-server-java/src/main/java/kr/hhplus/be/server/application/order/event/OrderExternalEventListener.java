@@ -1,16 +1,16 @@
-package kr.hhplus.be.server.application.externalPlatform;
+package kr.hhplus.be.server.application.order.event;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
-public class OrderExternalEventListner {
+public class OrderExternalEventListener {
 
     private final OrderExternalEventPublisher orderExternalEventPublisher;
 
-    @EventListener
+    @TransactionalEventListener
     public void handle(OrderExternalCommand command) {
         orderExternalEventPublisher.publish(command);
     }

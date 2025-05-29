@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.infra.external;
+package kr.hhplus.be.server.infra.external.dataPlatform;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
