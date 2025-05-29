@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.application.order;
 
-import kr.hhplus.be.server.application.externalPlatform.OrderExternalCommand;
+import kr.hhplus.be.server.application.order.event.OrderExternalCommand;
 import kr.hhplus.be.server.application.product.ProductLockService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.account.AccountInfo;
