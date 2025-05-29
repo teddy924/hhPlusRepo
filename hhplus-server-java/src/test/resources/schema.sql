@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS account_history;
 DROP TABLE IF EXISTS account;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS product_rank_snapshot;
+DROP TABLE IF EXISTS outbox_event;
 
 CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -187,3 +188,16 @@ CREATE TABLE product_rank_snapshot (
     INDEX idx_category_product (category, product_id),
     INDEX idx_snapshot_at (snapshot_at)
 );
+
+
+CREATE TABLE outbox_event (
+                              id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                              aggregate_type VARCHAR(255), -- 예: ORDER
+                              aggregate_id VARCHAR(255),   -- 예: 주문 ID
+                              event_type VARCHAR(255),     -- 예: ORDER_CREATED
+                              payload TEXT,                -- JSON 직렬화된 메시지
+                              status VARCHAR(50) DEFAULT 'PENDING', -- 발행 상태 (PENDING, SENT, FAILED 등)
+                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_outbox_event_latest ON outbox_event (aggregate_id, event_type, created_at);
