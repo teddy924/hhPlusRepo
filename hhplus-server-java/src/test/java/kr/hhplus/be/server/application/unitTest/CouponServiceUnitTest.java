@@ -101,7 +101,10 @@ class CouponServiceUnitTest {
     @Test
     @DisplayName("쿠폰 발급 시 쿠폰이 존재하지 않으면 예외 발생")
     void issueCoupon_shouldThrow_whenCouponNotFound() {
-        CouponIssueCommand couponIssueCommand = new CouponIssueCommand(1L, 1L);
+        CouponIssueCommand couponIssueCommand = CouponIssueCommand.builder()
+                        .userId(1L)
+                        .couponId(1L)
+                        .build();
         when(couponRepository.getById(anyLong()))
                 .thenThrow(new CustomException(ErrorCode.NOT_EXIST_COUPON));
 
@@ -116,7 +119,10 @@ class CouponServiceUnitTest {
     @DisplayName("유효기간이 만료된 쿠폰을 발급할 경우 예외 발생")
     void issueCoupon_shouldThrow_whenCouponExpired() {
         // given
-        CouponIssueCommand couponIssueCommand = new CouponIssueCommand(1L, 10L);
+        CouponIssueCommand couponIssueCommand = CouponIssueCommand.builder()
+                .userId(1L)
+                .couponId(10L)
+                .build();
 
         Coupon expiredCoupon = new Coupon(
                 10L,
