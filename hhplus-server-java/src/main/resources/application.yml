@@ -74,6 +74,10 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      missing-topics-fatal: false
+    admin:
+      auto-create: true
 
 logging:
   level:
