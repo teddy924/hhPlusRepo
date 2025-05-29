@@ -66,7 +66,6 @@ spring:
     active: local   # 기본 실행 시 local 환경
 
   kafka:
-    bootstrap-servers: localhost:9092
     consumer:
       group-id: my-group
       auto-offset-reset: earliest
@@ -81,6 +80,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     kr.hhplus: DEBUG
+    org.apache.kafka: DEBUG
+    org.springframework.kafka: DEBUG
 
 springdoc:
   api-docs:
