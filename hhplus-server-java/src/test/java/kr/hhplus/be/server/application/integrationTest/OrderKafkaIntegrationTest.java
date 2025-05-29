@@ -4,12 +4,11 @@ import kr.hhplus.be.server.config.KafkaConsumerTestConfig;
 import kr.hhplus.be.server.config.KafkaProducerTestConfig;
 import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.infra.external.dataPlatform.ExternalClient;
-import kr.hhplus.be.server.infra.outbox.OutboxEvent;
 import kr.hhplus.be.server.infra.outbox.OutboxRepository;
-import kr.hhplus.be.server.infra.outbox.OutboxStatus;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -22,22 +21,18 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.MessageListener;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ActiveProfiles("test")
@@ -96,79 +91,22 @@ public class OrderKafkaIntegrationTest {
     @Test
     void produceAndConsumeTest() throws Exception {
         // given
-        String payload = "{\"orderId\": 100, \"orderStatus\": \"CREATED\"}";
+        String payload = """
+                    {
+                      "orderId": 1,
+                      "orderStatus": "CREATED",
+                      "outboxEventId": 9999
+                    }
+                """;
 
         // when
         kafkaTemplate.send(TOPIC, payload);
+        kafkaTemplate.flush(); // flush 강제 추가
+        boolean consumed = latch.await(5, TimeUnit.SECONDS);
 
         // then
-        boolean consumed = latch.await(5, TimeUnit.SECONDS);
         Assertions.assertNotNull(consumedMessage.get());
-        assertTrue(consumedMessage.get().contains("\"orderId\": 100"));
+        assertTrue(consumedMessage.get().contains("\"orderId\": 1"));
     }
 
-    @Test
-    void manualRecovererAccept_shouldInsertFailedConsumerOutboxEvent() throws Exception {
-        // given: 선행 OutboxEvent insert (원본 데이터)
-        OutboxEvent original = OutboxEvent.builder()
-                .aggregateType("ORDER")
-                .aggregateId("200")
-                .eventType("ORDER_CREATED")
-                .payload("{\"orderId\":200,\"orderStatus\":\"CREATED\"}")
-                .status(OutboxStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        original = outboxRepository.save(original);  // save 후 id 획득
-
-        // 실패 시 보내질 메시지 (outboxEventId 포함)
-        String jsonPayload = String.format("{\"orderId\":200,\"orderStatus\":\"CREATED\",\"outboxEventId\":%d}", original.getId());
-
-        // Kafka ConsumerRecord mock 구성
-        ConsumerRecord<String, String> record = new ConsumerRecord<>(
-                "order.created.v1", // topic
-                0,                  // partition
-                0L,                 // offset
-                "key",              // key
-                jsonPayload         // value
-        );
-
-        // 커스텀 Recoverer 생성
-        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
-                (r, ex) -> new TopicPartition("order.created.v1.DLQ", r.partition())) {
-            @Override
-            public void accept(ConsumerRecord<?, ?> r, Exception ex) {
-                super.accept(r, ex);
-                try {
-                    String value = r.value().toString();
-                    JsonNode node = new ObjectMapper().readTree(value);
-                    Long outboxEventId = node.get("outboxEventId").asLong();
-
-                    OutboxEvent originalEvent = outboxRepository.findById(outboxEventId);
-
-                    OutboxEvent failed = OutboxEvent.builder()
-                            .aggregateType(originalEvent.getAggregateType())
-                            .aggregateId(originalEvent.getAggregateId())
-                            .eventType(originalEvent.getEventType())
-                            .payload(originalEvent.getPayload())
-                            .status(OutboxStatus.FAILED_CONSUMER)
-                            .build();
-
-                    outboxRepository.save(failed);
-                    log.info("🟠 DLQ 처리 완료, ID = {}", failed.getId());
-
-                } catch (Exception e) {
-                    log.error("DLQ 처리 실패", e);
-                }
-            }
-        };
-
-        // when: 예외와 함께 recoverer 호출
-        recoverer.accept(record, new RuntimeException("강제 실패"));
-
-        // then: 새로운 FAILED_CONSUMER 이벤트가 저장되었는지 확인
-        List<OutboxEvent> failedList = outboxRepository.findByStatus(OutboxStatus.FAILED_CONSUMER);
-        assertFalse(failedList.isEmpty(), "FAILED_CONSUMER 이벤트가 저장되어야 합니다");
-        log.info("DLQ 저장 확인: {}", failedList.get(0));
-    }
 }

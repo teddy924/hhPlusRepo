@@ -1,8 +1,11 @@
 package kr.hhplus.be.server.application.order;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.application.order.event.OrderExternalCommand;
 import kr.hhplus.be.server.application.product.ProductLockService;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.swagger.ErrorCode;
 import kr.hhplus.be.server.domain.account.AccountInfo;
 import kr.hhplus.be.server.application.account.AccountService;
 import kr.hhplus.be.server.domain.coupon.CouponApplyInfo;
@@ -21,6 +24,8 @@ import kr.hhplus.be.server.domain.payment.entity.Payment;
 import kr.hhplus.be.server.domain.product.entity.Product;
 import kr.hhplus.be.server.domain.user.UserRepository;
 import kr.hhplus.be.server.domain.user.entity.User;
+import kr.hhplus.be.server.infra.outbox.OutboxEvent;
+import kr.hhplus.be.server.infra.outbox.OutboxService;
 import kr.hhplus.be.server.interfaces.order.OrderDetailResponseDTO;
 import kr.hhplus.be.server.interfaces.payment.PaymentDTO;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +57,8 @@ public class OrderFacade {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final OutboxService outboxService;
+    private final ObjectMapper objectMapper;
 
     // 주문 + 결제
     @Transactional      // 	상태 변경 많고 실패 시 전체 롤백 필요
@@ -81,7 +88,10 @@ public class OrderFacade {
 
             if (command.couponId() != null) {
                 // 쿠폰, 발급이력 조회
-                couponInfo = couponService.retrieveCouponInfo(new CouponIssueCommand(command.userId(), command.couponId()));
+                couponInfo = couponService.retrieveCouponInfo(CouponIssueCommand.builder()
+                        .userId(command.userId())
+                        .couponId(command.couponId())
+                        .build());
 
                 // 할인 금액 계산
                 couponApplyInfo = couponInfo.applyDiscount(totalPrice);
@@ -124,8 +134,7 @@ public class OrderFacade {
                 couponService.useCoupon(couponInfo);
             }
 
-            // 이벤트 처리 - 주문 외부 플랫폼 전송
-            applicationEventPublisher.publishEvent(OrderExternalCommand.builder()
+            saveOrderExternalKafka(OrderExternalCommand.builder()
                     .orderId(order.getId())
                     .status(OrderStatus.CREATED)
                     .build());
@@ -209,11 +218,11 @@ public class OrderFacade {
                 couponService.restoreCoupon(order.getUser().getId(), orderSaveInfo.orderCoupon().getCouponIssueId());
             }
 
-            // 이벤트 처리 - 주문 외부 플랫폼 전송
-            applicationEventPublisher.publishEvent(OrderExternalCommand.builder()
+            saveOrderExternalKafka(OrderExternalCommand.builder()
                     .orderId(order.getId())
                     .status(OrderStatus.CANCELED)
                     .build());
+
         }
         catch (Exception e) {
             // 재고 복구
@@ -259,6 +268,36 @@ public class OrderFacade {
 
 
         return OrderDetailResponseDTO.from(order, itemDTOs, addressDTO, paymentDto, order.getOrderStatus());
+    }
+
+    public void saveOrderExternalKafka(OrderExternalCommand command) {
+        try {
+            // 1. ID 확보용 임시 저장
+            OutboxEvent tmp = outboxService.saveOutboxEvent(
+                    "ORDER",
+                    String.valueOf(command.orderId()),
+                    "ORDER_CREATED",
+                    "TEMP"
+            );
+
+            // 2. ID 포함된 실제 command 생성
+            OrderExternalCommand enriched = new OrderExternalCommand(
+                    command.orderId(),
+                    command.status(),
+                    tmp.getId() // ID 주입
+            );
+            String finalPayload = objectMapper.writeValueAsString(enriched);
+
+            // 3. insert-only 전략: 새로운 이벤트로 저장 (업데이트 없이)
+            outboxService.saveOutboxEvent(
+                    "ORDER",
+                    String.valueOf(command.orderId()),
+                    "ORDER_CREATED",
+                    finalPayload
+            );
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.FAIL_SERIALIZATION);
+        }
     }
 
 }
