@@ -7,7 +7,8 @@ import java.util.ArrayList;
 @Builder
 public record CouponIssueCommand(
         Long userId,
-        Long couponId
+        Long couponId,
+        Long outboxEventId
 ) {
     public CouponIssueInfo toInfo(){
         return new CouponIssueInfo(userId, couponId, new ArrayList<>());

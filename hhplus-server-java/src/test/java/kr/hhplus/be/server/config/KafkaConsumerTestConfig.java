@@ -32,7 +32,8 @@ public class KafkaConsumerTestConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    private static final String DLQ_TOPIC = "order.created.v1.dlq";
+    private static final String ORDER_DLQ_TOPIC = "order.created.v1.dlq";
+    private static final String COUPON_DLQ_TOPIC = "coupon.FCIssued.v1.dlq";
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final OutboxRepository outboxRepository;
 
@@ -84,7 +85,7 @@ public class KafkaConsumerTestConfig {
         // DLQ + Outbox insert-only 실패 처리 커스텀 recoverer
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
                 kafkaTemplate,
-                (record, ex) -> new TopicPartition(DLQ_TOPIC, record.partition())
+                (record, ex) -> new TopicPartition(ORDER_DLQ_TOPIC, record.partition())
         ) {
             @Override
             public void accept(ConsumerRecord<?, ?> record, Exception ex) {
@@ -119,4 +120,66 @@ public class KafkaConsumerTestConfig {
         factory.setCommonErrorHandler(errorHandler);
         return factory;
     }
+
+    // CouponIssuedCommand consumer
+    @Bean
+    public ConsumerFactory<String, String> couponIssueCommandConsumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "coupon.group");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new DefaultKafkaConsumerFactory<>(config);
+    }
+
+    // DLQ 설정 포함
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> couponIssueCommandKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        System.out.println("✅ factory 생성됨: couponIssueCommandKafkaListenerContainerFactory");
+        log.info("✅ factory 생성됨: couponIssueCommandKafkaListenerContainerFactory");
+        factory.setConsumerFactory(couponIssueCommandConsumerFactory());
+
+        // DLQ + Outbox insert-only 실패 처리 커스텀 recoverer
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
+                kafkaTemplate,
+                (record, ex) -> new TopicPartition(COUPON_DLQ_TOPIC, record.partition())
+        ) {
+            @Override
+            public void accept(ConsumerRecord<?, ?> record, Exception ex) {
+                super.accept(record, ex);
+                try {
+                    String value = record.value().toString();
+                    JsonNode node = new ObjectMapper().readTree(value);
+                    Long outboxEventId = node.get("outboxEventId").asLong();
+
+                    OutboxEvent original = outboxRepository.findById(outboxEventId);
+
+                    OutboxEvent failedEvent = OutboxEvent.builder()
+                            .aggregateType(original.getAggregateType())
+                            .aggregateId(original.getAggregateId())
+                            .eventType(original.getEventType())
+                            .payload(original.getPayload())
+                            .status(OutboxStatus.FAILED_CONSUMER)
+                            .build();
+
+                    outboxRepository.save(failedEvent);
+                    log.info("accept : {}", failedEvent.getId());
+
+                } catch (Exception e) {
+                    log.error("DLQ 처리 중 예외 발생", e);
+                }
+            }
+        };
+
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, new FixedBackOff(3000L, 2));
+        errorHandler.setCommitRecovered(true); // DLQ 전송 후 커밋
+
+        factory.setCommonErrorHandler(errorHandler);
+        return factory;
+    }
+
 }
