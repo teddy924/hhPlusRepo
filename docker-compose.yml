@@ -17,6 +17,7 @@ services:
   redis-master:
     image: redis:7
     container_name: redis-master
+    restart: always
     ports:
       - "6379:6379"
     command: [ "redis-server", "--appendonly", "yes" ]
@@ -26,6 +27,7 @@ services:
   redis-slave1:
     image: redis:7
     container_name: redis-slave1
+    restart: always
     ports:
       - "6380:6379"
     command: [ "redis-server", "--replicaof", "redis-master", "6379", "--loglevel", "debug" ]
@@ -37,6 +39,7 @@ services:
   redis-slave2:
     image: redis:7
     container_name: redis-slave2
+    restart: always
     ports:
       - "6381:6379"
     command: [ "redis-server", "--replicaof", "redis-master", "6379", "--loglevel", "debug" ]
@@ -48,6 +51,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.3
     container_name: kafka
+    restart: always
     ports:
       - "9092:9092"
     environment:

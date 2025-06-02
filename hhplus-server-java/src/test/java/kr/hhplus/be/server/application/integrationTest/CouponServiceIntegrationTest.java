@@ -80,7 +80,12 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("쿠폰 발급 성공 - 쿠폰 수량 차감 + 이력 생성")
     void issueCoupon_shouldSucceed_whenValid() {
-        CouponIssueCommand command = new CouponIssueCommand(32L, 4L);
+        Long userId = 32L;
+        Long couponId = 4L;
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
 
         assertDoesNotThrow(() -> couponService.issueCoupon(command));
     }
@@ -88,7 +93,12 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("쿠폰 발급 실패 - 이미 발급받은 쿠폰")
     void issueCoupon_shouldThrow_whenAlreadyIssued() {
-        CouponIssueCommand command = new CouponIssueCommand(32L, 4L);
+        Long userId = 32L;
+        Long couponId = 4L;
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
 
         CustomException ex = assertThrows(CustomException.class, () -> couponService.issueCoupon(command));
         assertTrue(ex.getMessage().contains("이미 발급 받은 쿠폰입니다."));
@@ -97,7 +107,12 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("쿠폰 조회 - 유효한 발급 이력")
     void retrieveCouponInfo_shouldReturnCouponInfo() {
-        CouponIssueCommand command = new CouponIssueCommand(34L, 4L);
+        Long userId = 34L;
+        Long couponId = 4L;
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
 
         CouponInfo info = couponService.retrieveCouponInfo(command);
 
@@ -108,7 +123,12 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("쿠폰 조회 실패 - 이력 없음")
     void retrieveCouponInfo_shouldThrow_whenNoIssue() {
-        CouponIssueCommand command = new CouponIssueCommand(9999L, 1L);
+        Long userId = 9999L;
+        Long couponId = 1L;
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
 
         CustomException ex = assertThrows(CustomException.class,
                 () -> couponService.retrieveCouponInfo(command));
@@ -119,7 +139,12 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("쿠폰 사용 - 상태가 USED로 변경됨")
     void useCoupon_shouldUpdateStatusToUsed() {
-        CouponIssueCommand command = new CouponIssueCommand(35L, 5L);
+        Long userId = 35L;
+        Long couponId = 5L;
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
         CouponInfo info = couponService.retrieveCouponInfo(command);
 
         couponService.useCoupon(info);
@@ -149,7 +174,10 @@ class CouponServiceIntegrationTest {
         for (int i = 0; i < threadCount; i++) {
             executorService.submit(() -> {
                 try {
-                    couponService.issueCoupon(new CouponIssueCommand(userId, couponId));
+                    couponService.issueCoupon(CouponIssueCommand.builder()
+                            .userId(userId)
+                            .couponId(couponId)
+                            .build());
                 } catch (Exception e) {
                     // 예외 무시 — 지금은 DB 결과로 판단할 것이기 때문에
                 } finally {
@@ -185,7 +213,10 @@ class CouponServiceIntegrationTest {
         for (Long userId : userIds) {
             executor.submit(() -> {
                 try {
-                    couponService.issueCoupon(new CouponIssueCommand(userId, couponId));
+                    couponService.issueCoupon(CouponIssueCommand.builder()
+                            .userId(userId)
+                            .couponId(couponId)
+                            .build());
                 } catch (Exception ignored) {
                     // 재고 부족 예외는 정상으로 간주
                 } finally {

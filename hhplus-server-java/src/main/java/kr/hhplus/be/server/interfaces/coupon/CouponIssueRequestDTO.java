@@ -12,6 +12,9 @@ public record CouponIssueRequestDTO (
         Long couponId
 ) {
     public CouponIssueCommand toCommand() {
-        return new CouponIssueCommand(userId, couponId);
+        return CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
     }
 }

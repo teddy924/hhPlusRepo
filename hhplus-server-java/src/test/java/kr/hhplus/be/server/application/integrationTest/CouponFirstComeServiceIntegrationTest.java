@@ -43,7 +43,10 @@ public class CouponFirstComeServiceIntegrationTest {
         Long userId = 1001L;
         Long couponId = 9L;
 
-        CouponIssueCommand command = new CouponIssueCommand(userId, couponId);
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
 
         // when
         couponFirstComeService.issueCouponFirstCome(command);
@@ -65,7 +68,10 @@ public class CouponFirstComeServiceIntegrationTest {
 
         redissonClient.getSet(issueSetKey).add(userId);
 
-        CouponIssueCommand command = new CouponIssueCommand(userId, couponId);
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
 
         // expect
         CustomException ex = assertThrows(CustomException.class, () -> couponFirstComeService.issueCouponFirstCome(command));
@@ -78,7 +84,10 @@ public class CouponFirstComeServiceIntegrationTest {
         // given
         Long couponId = 700002L;
         Long lateUserId = 1002L;
-        CouponIssueCommand command = new CouponIssueCommand(lateUserId, couponId);
+        CouponIssueCommand command = CouponIssueCommand.builder()
+                .userId(lateUserId)
+                .couponId(couponId)
+                .build();
 
         // expect
         CustomException ex = assertThrows(CustomException.class, () -> couponFirstComeService.issueCouponFirstCome(command));
