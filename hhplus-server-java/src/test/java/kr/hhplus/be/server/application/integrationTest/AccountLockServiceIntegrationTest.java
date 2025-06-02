@@ -3,7 +3,9 @@ package kr.hhplus.be.server.application.integrationTest;
 import jakarta.persistence.EntityManager;
 import kr.hhplus.be.server.application.account.AccountCommand;
 import kr.hhplus.be.server.application.account.AccountLockService;
-import kr.hhplus.be.server.config.EmbeddedRedisConfig;
+import kr.hhplus.be.server.config.KafkaConsumerTestConfig;
+import kr.hhplus.be.server.config.KafkaProducerTestConfig;
+import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.domain.account.AccountRepository;
 import kr.hhplus.be.server.domain.account.entity.Account;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ActiveProfiles("test")
 @Testcontainers
 @SpringBootTest
-@Import(EmbeddedRedisConfig.class)
+@Import({RedissonTestConfig.class, KafkaProducerTestConfig.class, KafkaConsumerTestConfig.class})
 public class AccountLockServiceIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AccountLockServiceIntegrationTest.class);

@@ -4,7 +4,7 @@ import kr.hhplus.be.server.application.order.OrderCancelCommand;
 import kr.hhplus.be.server.application.order.OrderFacade;
 import kr.hhplus.be.server.application.product.*;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.config.EmbeddedRedisConfig;
+import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.entity.Product;
 import org.assertj.core.api.Assertions;
@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Import(EmbeddedRedisConfig.class)
+@Import(RedissonTestConfig.class)
 class  ProductServiceIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProductServiceIntegrationTest.class);

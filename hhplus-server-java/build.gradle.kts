@@ -65,6 +65,11 @@ dependencies {
 	implementation("commons-io:commons-io:2.11.0")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
+	// Kafka
+	implementation ("org.springframework.kafka:spring-kafka")
+	testImplementation("org.springframework.kafka:spring-kafka-test")
+
+
 
 }
 

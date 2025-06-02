@@ -3,6 +3,7 @@ package kr.hhplus.be.server.application.integrationTest;
 import kr.hhplus.be.server.application.coupon.CouponService;
 import kr.hhplus.be.server.common.CacheKey;
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.config.RedissonTestConfig;
 import kr.hhplus.be.server.domain.coupon.CouponInfo;
 import kr.hhplus.be.server.domain.coupon.CouponIssueCommand;
 import kr.hhplus.be.server.domain.coupon.CouponIssueRepository;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Import({RedissonTestConfig.class})
 @Transactional
 class CouponServiceIntegrationTest {
 

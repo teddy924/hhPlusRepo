@@ -52,8 +52,11 @@ public enum ErrorCode {
     NOT_EXIST_ORDER_ADDRESS(BAD_REQUEST.value(),"C-6002","해당 배송지 정보를 찾을 수 없습니다."),
 
     // payment
-    NOT_EXIST_PAYMENT(BAD_REQUEST.value(),"C-7001","해당 결제 정보를 찾을 수 없습니다.")
+    NOT_EXIST_PAYMENT(BAD_REQUEST.value(),"C-7001","해당 결제 정보를 찾을 수 없습니다."),
 
+    // outbox
+    FAIL_SERIALIZATION(BAD_REQUEST.value(), "C-8001", "Outbox 직렬화 실패"),
+    NOT_EXIST_OUTBOX_EVENT(BAD_REQUEST.value(), "C-8002", "Outbox 정보를 찾을 수 없습니다.")
     ;
 
     private final int statusCode;
