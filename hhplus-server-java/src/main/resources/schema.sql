@@ -184,9 +184,9 @@ CREATE TABLE product_rank_snapshot (
     ranking INT NOT NULL,
     snapshot_at TIMESTAMP NOT NULL,
 
-    UNIQUE KEY uq_category_ranking (category, ranking),
+    UNIQUE KEY uq_category_ranking (category, ranking, snapshot_at),
     INDEX idx_category_product (category, product_id),
-INDEX idx_snapshot_at (snapshot_at)
+    INDEX idx_snapshot_at (snapshot_at)
 );
 
 CREATE TABLE outbox_event (
