@@ -84,8 +84,21 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     kr.hhplus: DEBUG
-    org.apache.kafka: DEBUG
-    org.springframework.kafka: DEBUG
+    org.apache.kafka: info
+    org.springframework.kafka: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  metrics:
+    enable:
+      all: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 springdoc:
   api-docs:
