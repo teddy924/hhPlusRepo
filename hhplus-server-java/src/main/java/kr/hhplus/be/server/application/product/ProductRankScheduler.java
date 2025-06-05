@@ -35,7 +35,7 @@ public class ProductRankScheduler {
         this.objectMapper = objectMapper;
     }
 
-    @Scheduled(cron = "0 0 * * * *") // 1시간마다 예시
+    @Scheduled(cron = "0 0/10 * * * *")
     @Transactional
     public void updateProductRankSnapshot() {
         LocalDateTime snapshotAt = LocalDateTime.now();
